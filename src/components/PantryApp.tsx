@@ -5,6 +5,7 @@ import { ItemCard } from "@/components/ItemCard";
 import { ItemForm } from "@/components/ItemForm";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { ShoppingListPanel } from "@/components/ShoppingListPanel";
+import { BalancePanel } from "@/components/BalancePanel";
 import { api } from "@/lib/apiClient";
 import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
@@ -49,6 +50,17 @@ export function PantryApp() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [showHistory, setShowHistory] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
+
+  // Atalhos do PWA (manifest "shortcuts") abrem "/?open=lista" ou "/?open=novo" -
+  // le a query string direto do browser pra nao precisar de Suspense boundary
+  // que useSearchParams exigiria aqui.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const open = params.get("open");
+    if (open === "lista") setShowShoppingList(true);
+    if (open === "novo") setEditing({});
+  }, []);
 
   const sortedItems = useMemo(() => sortItems(items, sortBy), [items, sortBy]);
 
@@ -181,6 +193,12 @@ export function PantryApp() {
           🛒 Lista de compras
         </button>
         <button
+          onClick={() => setShowBalance(true)}
+          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
+        >
+          💰 Balanco
+        </button>
+        <button
           onClick={() => setEditing({})}
           className="font-disp rounded-full bg-accent-500 px-5 py-2.5 font-bold text-white shadow-sm transition hover:bg-accent-600"
         >
@@ -220,6 +238,7 @@ export function PantryApp() {
 
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {showShoppingList && <ShoppingListPanel onClose={() => setShowShoppingList(false)} />}
+      {showBalance && <BalancePanel onClose={() => setShowBalance(false)} />}
 
       {notice && (
         <div

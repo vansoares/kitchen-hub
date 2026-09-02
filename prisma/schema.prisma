@@ -49,3 +49,67 @@ model ConsumptionLog {
   @@index([timestamp])
   @@index([itemId])
 }
+
+model Recipe {
+  id           Int      @id @default(autoincrement())
+  title        String
+  servings     Int      @default(1)
+  instructions String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ingredients RecipeIngredient[]
+  menuLinks   MenuRecipe[]
+
+  @@index([title])
+}
+
+// Ingrediente e texto livre (nao aponta pro Item da despensa) - uma receita
+// pode citar "alho" mesmo que a despensa nao controle alho como item.
+model RecipeIngredient {
+  id       Int    @id @default(autoincrement())
+  recipeId Int
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  name     String
+  quantity Float
+  unit     String @default("un")
+
+  @@index([recipeId])
+}
+
+// Cardapio = um conjunto de receitas com "quantas porcoes" de cada uma vai
+// entrar; a lista de quantidades totais e calculada (nao guardada), somando
+// os ingredientes de cada receita escalados por porcoes/servings da receita.
+model Menu {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipes MenuRecipe[]
+
+  @@index([name])
+}
+
+model MenuRecipe {
+  id       Int    @id @default(autoincrement())
+  menuId   Int
+  menu     Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  recipeId Int
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  servings Int    @default(1)
+
+  @@index([menuId])
+  @@index([recipeId])
+}
+
+// Valor gasto registrado ao final de uma ida ao mercado (lista de compras),
+// pra alimentar o balanco de gastos.
+model Purchase {
+  id        Int      @id @default(autoincrement())
+  total     Float
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

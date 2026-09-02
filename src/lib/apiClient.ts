@@ -1,4 +1,6 @@
 import type { HistoryEntryDTO, ItemDTO } from "@/types/item";
+import type { MenuDetailDTO, MenuDTO, RecipeDTO } from "@/types/recipe";
+import type { PurchaseDTO, SpendingSummaryDTO } from "@/types/purchase";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -42,4 +44,25 @@ export const api = {
   globalHistory: (limit = 100) => request<HistoryEntryDTO[]>(`/history?limit=${limit}`),
   lookupBarcode: (code: string) =>
     request<{ found: boolean; name?: string | null; category?: string | null }>(`/barcode/${code}`),
+
+  listRecipes: (search?: string) => request<RecipeDTO[]>(`/recipes${search ? `?search=${search}` : ""}`),
+  getRecipe: (id: number) => request<RecipeDTO>(`/recipes/${id}`),
+  createRecipe: (data: Record<string, unknown>) =>
+    request<RecipeDTO>("/recipes", { method: "POST", body: JSON.stringify(data) }),
+  updateRecipe: (id: number, data: Record<string, unknown>) =>
+    request<RecipeDTO>(`/recipes/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteRecipe: (id: number) => request<void>(`/recipes/${id}`, { method: "DELETE" }),
+
+  listMenus: () => request<MenuDTO[]>("/menus"),
+  getMenu: (id: number) => request<MenuDetailDTO>(`/menus/${id}`),
+  createMenu: (data: Record<string, unknown>) =>
+    request<MenuDetailDTO>("/menus", { method: "POST", body: JSON.stringify(data) }),
+  updateMenu: (id: number, data: Record<string, unknown>) =>
+    request<MenuDetailDTO>(`/menus/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteMenu: (id: number) => request<void>(`/menus/${id}`, { method: "DELETE" }),
+
+  getSpendingSummary: () => request<SpendingSummaryDTO>("/purchases"),
+  createPurchase: (total: number, note?: string) =>
+    request<PurchaseDTO>("/purchases", { method: "POST", body: JSON.stringify({ total, note }) }),
+  deletePurchase: (id: number) => request<void>(`/purchases/${id}`, { method: "DELETE" }),
 };

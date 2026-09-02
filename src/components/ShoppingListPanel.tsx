@@ -78,6 +78,9 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [settings, setSettings] = useState<ShoppingListSettings>(DEFAULT_SETTINGS);
   const [showSettings, setShowSettings] = useState(false);
+  const [totalSpent, setTotalSpent] = useState("");
+  const [savingPurchase, setSavingPurchase] = useState(false);
+  const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setChecked(loadChecked());
@@ -119,6 +122,23 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
     const nextGroups = has ? settings.groups.filter((g) => g !== group) : [...settings.groups, group];
     if (nextGroups.length === 0) return; // sempre precisa de pelo menos um grupo selecionado
     updateSettings({ groups: nextGroups });
+  }
+
+  async function handleRegisterPurchase() {
+    const total = Number(totalSpent);
+    if (!(total > 0)) return;
+    setSavingPurchase(true);
+    setPurchaseNotice(null);
+    try {
+      await api.createPurchase(total);
+      setPurchaseNotice("Compra registrada!");
+      setTotalSpent("");
+      clearChecks();
+    } catch (err) {
+      setPurchaseNotice(err instanceof Error ? err.message : "Erro ao registrar compra");
+    } finally {
+      setSavingPurchase(false);
+    }
   }
 
   const pendingCount = items.filter((i) => !checked.has(i.id)).length;
@@ -291,6 +311,33 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="border-t border-brand-500/10 px-4 py-4 dark:border-white/10 sm:px-6">
+          <p className="mb-2 text-sm font-semibold text-brand-700 dark:text-brand-200">
+            Quanto voce gastou nessa compra?
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Valor total (R$)"
+              value={totalSpent}
+              onChange={(e) => setTotalSpent(e.target.value)}
+              className="min-w-[140px] flex-1 rounded-full border-2 border-brand-500/20 bg-white px-4 py-2 outline-none focus:border-brand-500 dark:bg-brand-900 dark:text-cream"
+            />
+            <button
+              onClick={handleRegisterPurchase}
+              disabled={savingPurchase || !(Number(totalSpent) > 0)}
+              className="font-disp rounded-full bg-accent-500 px-5 py-2 font-bold text-white disabled:opacity-40"
+            >
+              {savingPurchase ? "Salvando..." : "Registrar compra"}
+            </button>
+          </div>
+          {purchaseNotice && (
+            <p className="mt-2 text-sm font-semibold text-brand-600 dark:text-brand-200">{purchaseNotice}</p>
+          )}
         </div>
       </div>
     </div>

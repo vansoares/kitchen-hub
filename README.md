@@ -7,7 +7,7 @@ Stack 100% JS/TS pensada pra deploy direto no Vercel.
 ## Stack
 
 - **Next.js 15** (App Router) + TypeScript - frontend e API no mesmo projeto
-- **Prisma + Postgres** (Neon / Vercel Postgres) - banco gerenciado, serverless-friendly
+- **Prisma + Postgres** (Neon, Vercel Postgres ou Prisma Postgres) - banco gerenciado, serverless-friendly
 - **NextAuth (Google)** - login restrito por allowlist de email (`ALLOWED_EMAILS`)
 - **Tailwind CSS** - visual moderno, dark mode automático
 - **PWA** - instalável no celular, manifest gerado pelo Next (`src/app/manifest.ts`)
@@ -22,20 +22,25 @@ Stack 100% JS/TS pensada pra deploy direto no Vercel.
 ```
 src/
 ├── app/
-│   ├── page.tsx            # tela principal (despensa)
+│   ├── page.tsx             # despensa
+│   ├── receitas/page.tsx    # receitas salvas
+│   ├── cardapios/page.tsx   # cardapios (agregam receitas)
 │   ├── signin/page.tsx      # login
-│   ├── manifest.ts          # manifest da PWA
+│   ├── manifest.ts          # manifest da PWA (inclui shortcuts)
 │   └── api/
 │       ├── auth/[...nextauth]/route.ts
 │       ├── items/                    # CRUD + alerts + categories
 │       ├── history/route.ts          # historico global
+│       ├── recipes/                  # CRUD de receitas
+│       ├── menus/                    # CRUD de cardapios + quantidades agregadas
+│       ├── purchases/                # registro de gastos + balanco
 │       └── barcode/[code]/route.ts   # proxy Open Food Facts
-├── components/     # ItemCard, ItemForm, BarcodeScanner, ShoppingListPanel, HistoryPanel...
-├── lib/            # prisma client, regras de negocio (pantry.ts), auth
+├── components/     # ItemCard, ItemForm, ShoppingListPanel, BalancePanel, RecipesApp, MenusApp...
+├── lib/            # prisma client, regras de negocio (pantry/recipes/menus/purchases), auth
 ├── middleware.ts   # protege todas as rotas (paginas + API) por sessao
-└── types/item.ts   # tipos compartilhados
+└── types/          # tipos compartilhados
 
-prisma/schema.prisma  # modelo de dados (Item, ConsumptionLog)
+prisma/schema.prisma  # Item, ConsumptionLog, Recipe, RecipeIngredient, Menu, MenuRecipe, Purchase
 ```
 
 ## Modelo de dados
@@ -48,6 +53,19 @@ ajuste) fica registrado — é o histórico de consumo.
 
 Status (`ok` / `acabando` / `vencendo` / `vencido`) é calculado on-the-fly em
 [`src/lib/status.ts`](src/lib/status.ts), nunca guardado no banco.
+
+**Recipe** (receita): título, porções que rende, modo de preparo, lista de
+`RecipeIngredient` (nome livre + quantidade + unidade — não precisa ser um
+item da despensa).
+
+**Menu** (cardápio): nome + lista de receitas incluídas, cada uma com quantas
+porções entram naquele cardápio. As quantidades totais de ingredientes
+([`src/lib/menus.ts:aggregateIngredients`](src/lib/menus.ts)) são sempre
+*calculadas* somando `ingrediente × (porções pedidas / porções base da receita)`
+— nunca guardadas, então editar uma receita atualiza todos os cardápios que a usam.
+
+**Purchase**: valor total gasto numa ida ao mercado (registrado ao final da
+lista de compras), usado pra montar o balanço de gastos.
 
 ## Setup local
 
@@ -64,7 +82,12 @@ Status (`ok` / `acabando` / `vencendo` / `vencido`) é calculado on-the-fly em
 4. Copie `.env.example` para `.env.local` e preencha `DATABASE_URL`,
    `NEXTAUTH_SECRET` (`openssl rand -base64 32`), `GOOGLE_CLIENT_ID`,
    `GOOGLE_CLIENT_SECRET` e `ALLOWED_EMAILS` (seu email).
-5. **Aplique o schema no banco:**
+5. **Aplique o schema no banco.** Mais simples (sem migration files, bom pra
+   comecar e pra sincronizar mudancas de schema rapido):
+   ```bash
+   npx prisma db push
+   ```
+   Ou, se preferir manter historico de migracoes versionado:
    ```bash
    npx prisma migrate dev --name init
    ```
@@ -115,3 +138,28 @@ mercado.
 No formulário de novo/editar item, o botão 📷 abre a câmera (via
 `html5-qrcode`) e consulta a Open Food Facts (gratuita, sem chave) pra
 pré-preencher nome e categoria. Funciona melhor no celular.
+
+## Receitas e cardápios
+
+Na aba "Receitas", salve pratos com título, quantas porções rendem e a lista
+de ingredientes (nome + quantidade + unidade, livre — não precisa bater com
+os itens da despensa). Na aba "Cardápios", monte um conjunto de receitas
+(ex: "Jantar de sexta") escolhendo quantas porções de cada uma entram — a
+tela mostra a **quantidade total agregada** de cada ingrediente, somando e
+escalando os ingredientes de todas as receitas escolhidas.
+
+## Balanço de gastos
+
+Ao final da lista de compras (🛒), tem um campo pra registrar quanto você
+gastou naquela ida ao mercado. O botão "💰 Balanço" mostra o total gasto no
+mês, o total geral e as últimas compras — cada lançamento pode ser excluído
+se você errar um valor.
+
+## Atalhos na tela inicial (PWA)
+
+Depois de instalar o app, segurar o ícone (Android) ou clicar com o botão
+direito nele (desktop) mostra atalhos direto pra "Lista de compras", "Novo
+item" e "Receitas" — configurados em [`src/app/manifest.ts`](src/app/manifest.ts).
+Os dois primeiros abrem `/?open=lista` / `/?open=novo`, que o
+[`PantryApp`](src/components/PantryApp.tsx) lê ao carregar pra já abrir o
+painel certo.
