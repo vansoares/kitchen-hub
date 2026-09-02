@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { BarcodeScanner } from "@/components/BarcodeScanner";
-import { api } from "@/lib/apiClient";
 import type { ItemDTO, ItemGroup } from "@/types/item";
 
 const UNIDADES = ["un", "kg", "g", "l", "ml", "pct", "cx", "dz"];
@@ -24,8 +22,6 @@ interface FormState {
   group: ItemGroup;
   category: string;
   minQuantity: number | string;
-  expiryDate: string;
-  barcode: string;
 }
 
 function emptyForm(defaultGroup: ItemGroup): FormState {
@@ -36,8 +32,6 @@ function emptyForm(defaultGroup: ItemGroup): FormState {
     group: defaultGroup,
     category: "Outros",
     minQuantity: 1,
-    expiryDate: "",
-    barcode: "",
   };
 }
 
@@ -60,13 +54,9 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
           group: initial.group ?? defaultGroup,
           category: initial.category ?? "Outros",
           minQuantity: initial.minQuantity ?? 1,
-          expiryDate: initial.expiryDate ?? "",
-          barcode: initial.barcode ?? "",
         }
       : {}),
   }));
-  const [scanning, setScanning] = useState(false);
-  const [looking, setLooking] = useState(false);
   const isEditing = Boolean(initial?.id);
   const categoriasSugeridas = CATEGORIAS_POR_GRUPO[form.group];
 
@@ -82,34 +72,12 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
     }));
   }
 
-  async function handleBarcodeDetected(code: string) {
-    setScanning(false);
-    setField("barcode", code);
-    setLooking(true);
-    try {
-      const result = await api.lookupBarcode(code);
-      if (result.found) {
-        setForm((f) => ({
-          ...f,
-          name: f.name || result.name || f.name,
-          category: result.category || f.category,
-        }));
-      }
-    } catch {
-      /* busca e best-effort; usuario pode preencher manualmente */
-    } finally {
-      setLooking(false);
-    }
-  }
-
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     onSave({
       ...form,
       quantity: Number(form.quantity),
       minQuantity: Number(form.minQuantity),
-      expiryDate: form.expiryDate || null,
-      barcode: form.barcode || null,
     });
   }
 
@@ -126,10 +94,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
           {isEditing ? "Editar item" : "Novo item"}
         </h2>
 
-        {scanning ? (
-          <BarcodeScanner onDetected={handleBarcodeDetected} onClose={() => setScanning(false)} />
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Field label="Tipo">
               <div className="grid grid-cols-2 gap-2">
                 {GROUPS.map((g) => (
@@ -157,25 +122,6 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
                 placeholder="Ex: Arroz branco"
                 className={inputClass}
               />
-            </Field>
-
-            <Field label="Codigo de barras">
-              <div className="flex gap-2">
-                <input
-                  value={form.barcode}
-                  onChange={(e) => setField("barcode", e.target.value)}
-                  placeholder="Opcional"
-                  className={`${inputClass} min-w-0 flex-1`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setScanning(true)}
-                  className="shrink-0 rounded-xl bg-brand-500/10 px-3 text-lg"
-                >
-                  📷
-                </button>
-              </div>
-              {looking && <small className="text-brand-400">Buscando produto...</small>}
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -216,15 +162,6 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
               </Field>
             </div>
 
-            <Field label="Data de validade">
-              <input
-                type="date"
-                value={form.expiryDate}
-                onChange={(e) => setField("expiryDate", e.target.value)}
-                className={inputClass}
-              />
-            </Field>
-
             <div className="mt-2 flex gap-2">
               <button
                 type="button"
@@ -246,8 +183,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
                 Salvar
               </button>
             </div>
-          </form>
-        )}
+        </form>
       </div>
     </div>
   );

@@ -66,7 +66,7 @@ function saveSettings(settings: ShoppingListSettings) {
 
 function matchesSettings(item: ItemDTO, settings: ShoppingListSettings): boolean {
   if (!settings.groups.includes(item.group)) return false;
-  if (item.status === "vencendo" || item.status === "vencido") return true;
+  if (item.status === "acabou") return true;
   const threshold = settings.maxQuantity ?? item.minQuantity;
   return item.quantity <= threshold;
 }
@@ -260,7 +260,7 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <p className="text-xs text-brand-400 dark:text-brand-300">
-              Itens vencendo ou vencidos sempre aparecem, independente do criterio acima.
+              Itens acabados sempre aparecem, independente do criterio acima.
             </p>
           </div>
         )}

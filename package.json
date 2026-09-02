@@ -12,7 +12,6 @@
   "dependencies": {
     "@prisma/client": "^5.20.0",
     "@vercel/analytics": "^2.0.1",
-    "html5-qrcode": "^2.3.8",
     "next": "^15.5.25",
     "next-auth": "^4.24.15",
     "react": "^19.0.0",

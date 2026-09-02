@@ -3,15 +3,13 @@ import type { ItemStatus } from "@/types/item";
 const STYLES: Record<ItemStatus, string> = {
   ok: "bg-emerald-500 text-white",
   acabando: "bg-amber-500 text-white",
-  vencendo: "bg-accent-500 text-white",
-  vencido: "bg-red-500 text-white",
+  acabou: "bg-red-500 text-white",
 };
 
 const LABELS: Record<ItemStatus, string> = {
   ok: "Em dia",
   acabando: "Acabando",
-  vencendo: "Vencendo",
-  vencido: "Vencido",
+  acabou: "Acabou",
 };
 
 export function Badge({ status }: { status: ItemStatus }) {

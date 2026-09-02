@@ -33,9 +33,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     ...(body.unit !== undefined ? { unit: body.unit } : {}),
     ...(body.group !== undefined ? { group: body.group } : {}),
     ...(body.category !== undefined ? { category: body.category } : {}),
-    ...(body.barcode !== undefined ? { barcode: body.barcode } : {}),
     ...(body.minQuantity !== undefined ? { minQuantity: Number(body.minQuantity) } : {}),
-    ...(body.expiryDate !== undefined ? { expiryDate: body.expiryDate } : {}),
     ...(body.lastPurchaseDate !== undefined ? { lastPurchaseDate: body.lastPurchaseDate } : {}),
   });
 

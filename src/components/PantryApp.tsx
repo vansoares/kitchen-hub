@@ -7,12 +7,12 @@ import { ShoppingListPanel } from "@/components/ShoppingListPanel";
 import { BalancePanel } from "@/components/BalancePanel";
 import { ActionMenu } from "@/components/ActionMenu";
 import { api } from "@/lib/apiClient";
+import { DEFAULT_SETTINGS, loadSettings, SETTINGS_EVENT, type AppSettings, type SortBy } from "@/lib/settings";
 import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
 type Notice = { type: "success" | "error"; text: string } | null;
-type SortBy = "name" | "expiry" | "status";
 
-const STATUS_PRIORITY: Record<ItemStatus, number> = { vencido: 0, vencendo: 1, acabando: 2, ok: 3 };
+const STATUS_PRIORITY: Record<ItemStatus, number> = { acabou: 0, acabando: 1, ok: 2 };
 
 const GROUP_TABS: { value: ItemGroup; label: string }[] = [
   { value: "alimento", label: "🍽️ Alimentos" },
@@ -33,13 +33,6 @@ function sortItems(items: ItemDTO[], sortBy: SortBy): ItemDTO[] {
     sorted.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   } else if (sortBy === "status") {
     sorted.sort((a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]);
-  } else if (sortBy === "expiry") {
-    sorted.sort((a, b) => {
-      if (!a.expiryDate && !b.expiryDate) return 0;
-      if (!a.expiryDate) return 1;
-      if (!b.expiryDate) return -1;
-      return a.expiryDate.localeCompare(b.expiryDate);
-    });
   }
   return sorted;
 }
@@ -65,6 +58,28 @@ export function PantryApp({ userName }: { userName?: string | null }) {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+
+  // Aplica a aba/ordenacao/filtro padrao salvos so uma vez, logo apos a
+  // hidratacao (pra nao divergir da renderizacao inicial no servidor) - depois
+  // disso quem manda e a navegacao do usuario na tela, nao mais as preferencias.
+  useEffect(() => {
+    const s = loadSettings();
+    setSettings(s);
+    setGroup(s.defaultGroup);
+    setSortBy(s.defaultSort);
+    setOnlyAlerts(s.defaultOnlyAlerts);
+  }, []);
+
+  // Preferencias de exibicao (resumo/densidade dos cards) continuam
+  // atualizando ao vivo se a pessoa mexer nas configuracoes durante o uso.
+  useEffect(() => {
+    function refreshSettings() {
+      setSettings(loadSettings());
+    }
+    window.addEventListener(SETTINGS_EVENT, refreshSettings);
+    return () => window.removeEventListener(SETTINGS_EVENT, refreshSettings);
+  }, []);
 
   // Atalhos do PWA (manifest "shortcuts") abrem "/?open=lista" ou "/?open=novo" -
   // le a query string direto do browser pra nao precisar de Suspense boundary
@@ -178,7 +193,7 @@ export function PantryApp({ userName }: { userName?: string | null }) {
         <p className="text-sm text-brand-900/50 dark:text-cream/50">{today}</p>
       </div>
 
-      {stats && (
+      {stats && settings.showStats && (
         <div className="mb-5 grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-white p-4 dark:bg-brand-800">
             <div className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">Itens</div>
@@ -247,7 +262,6 @@ export function PantryApp({ userName }: { userName?: string | null }) {
             className="min-w-0 flex-1 rounded-full bg-white px-4 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
           >
             <option value="name">Ordenar: Nome</option>
-            <option value="expiry">Ordenar: Validade</option>
             <option value="status">Ordenar: Status</option>
           </select>
         </div>
@@ -283,11 +297,11 @@ export function PantryApp({ userName }: { userName?: string | null }) {
       {!error && loading && <p className="py-16 text-center text-brand-400">Carregando...</p>}
       {!error && !loading && items.length === 0 && (
         <p className="py-16 text-center text-brand-400">
-          {onlyAlerts ? "Nenhum item acabando ou vencendo. 🎉" : "Nenhum item encontrado."}
+          {onlyAlerts ? "Nenhum item acabando ou acabado. 🎉" : "Nenhum item encontrado."}
         </p>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${settings.compactCards ? "gap-3" : "gap-4"}`}>
         {sortedItems.map((item) => (
           <ItemCard
             key={item.id}
@@ -295,6 +309,7 @@ export function PantryApp({ userName }: { userName?: string | null }) {
             onConsume={handleConsume}
             onPurchase={handlePurchase}
             onEdit={setEditing}
+            compact={settings.compactCards}
           />
         ))}
       </div>

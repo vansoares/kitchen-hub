@@ -1,24 +1,8 @@
 import type { Item } from "@prisma/client";
 import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
-// Itens vencendo dentro desse numero de dias entram no status "vencendo".
-export const EXPIRY_WARNING_DAYS = 3;
-
-function toDateOnly(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-export function computeStatus(item: Pick<Item, "quantity" | "minQuantity" | "expiryDate">): ItemStatus {
-  const today = toDateOnly(new Date());
-
-  if (item.expiryDate) {
-    const expiry = toDateOnly(new Date(item.expiryDate));
-    if (expiry < today) return "vencido";
-    const warningCutoff = new Date(today);
-    warningCutoff.setDate(warningCutoff.getDate() + EXPIRY_WARNING_DAYS);
-    if (expiry <= warningCutoff) return "vencendo";
-  }
-
+export function computeStatus(item: Pick<Item, "quantity" | "minQuantity">): ItemStatus {
+  if (item.quantity <= 0) return "acabou";
   if (item.quantity <= item.minQuantity) return "acabando";
   return "ok";
 }
@@ -36,9 +20,7 @@ export function toItemDTO(item: Item): ItemDTO {
     unit: item.unit,
     group: item.group as ItemGroup,
     category: item.category,
-    barcode: item.barcode,
     minQuantity: item.minQuantity,
-    expiryDate: toIsoDate(item.expiryDate),
     lastPurchaseDate: toIsoDate(item.lastPurchaseDate),
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),

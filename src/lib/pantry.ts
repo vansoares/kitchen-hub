@@ -8,9 +8,7 @@ export interface ItemInput {
   unit: string;
   group: string;
   category: string;
-  barcode: string | null;
   minQuantity: number;
-  expiryDate: string | null;
   lastPurchaseDate: string | null;
 }
 
@@ -65,9 +63,7 @@ export function createItem(data: ItemInput) {
         unit: data.unit,
         group: data.group,
         category: data.category,
-        barcode: data.barcode,
         minQuantity: data.minQuantity,
-        expiryDate: toDate(data.expiryDate),
         lastPurchaseDate: toDate(data.lastPurchaseDate),
       },
     });
@@ -87,9 +83,7 @@ export async function updateItem(id: number, data: Partial<ItemInput>) {
         ...(data.unit !== undefined ? { unit: data.unit } : {}),
         ...(data.group !== undefined ? { group: data.group } : {}),
         ...(data.category !== undefined ? { category: data.category } : {}),
-        ...(data.barcode !== undefined ? { barcode: data.barcode } : {}),
         ...(data.minQuantity !== undefined ? { minQuantity: data.minQuantity } : {}),
-        ...(data.expiryDate !== undefined ? { expiryDate: toDate(data.expiryDate) } : {}),
         ...(data.lastPurchaseDate !== undefined
           ? { lastPurchaseDate: toDate(data.lastPurchaseDate) }
           : {}),
@@ -146,10 +140,5 @@ export async function getAlerts(group?: string) {
   const items = await prisma.item.findMany({ where: group ? { group } : undefined });
   return items
     .filter((item) => computeStatus(item) !== "ok")
-    .sort((a, b) => {
-      if (!a.expiryDate && !b.expiryDate) return 0;
-      if (!a.expiryDate) return 1;
-      if (!b.expiryDate) return -1;
-      return a.expiryDate.getTime() - b.expiryDate.getTime();
-    });
+    .sort((a, b) => (a.quantity === b.quantity ? 0 : a.quantity - b.quantity));
 }

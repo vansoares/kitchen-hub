@@ -20,9 +20,7 @@ model Item {
   // (ex: "Laticinios", "Limpeza"), "group" e so essas duas grandes abas.
   group            String   @default("alimento") // "alimento" | "limpeza_higiene"
   category         String   @default("Outros")
-  barcode          String?
   minQuantity      Float    @default(1)
-  expiryDate       DateTime? @db.Date
   lastPurchaseDate DateTime? @db.Date
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

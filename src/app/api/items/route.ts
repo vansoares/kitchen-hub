@@ -31,9 +31,7 @@ export async function POST(req: NextRequest) {
     unit: body.unit ?? "un",
     group: body.group ?? "alimento",
     category: body.category ?? "Outros",
-    barcode: body.barcode ?? null,
     minQuantity: Number(body.minQuantity ?? 1),
-    expiryDate: body.expiryDate ?? null,
     lastPurchaseDate: body.lastPurchaseDate ?? null,
   });
 

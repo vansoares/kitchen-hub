@@ -40,8 +40,6 @@ export const api = {
     request<ItemDTO>(`/items/${id}/purchase`, { method: "POST", body: JSON.stringify({ amount }) }),
   consumeItem: (id: number, amount: number) =>
     request<ItemDTO>(`/items/${id}/consume`, { method: "POST", body: JSON.stringify({ amount }) }),
-  lookupBarcode: (code: string) =>
-    request<{ found: boolean; name?: string | null; category?: string | null }>(`/barcode/${code}`),
 
   listRecipes: (search?: string) => request<RecipeDTO[]>(`/recipes${search ? `?search=${search}` : ""}`),
   getRecipe: (id: number) => request<RecipeDTO>(`/recipes/${id}`),
