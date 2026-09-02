@@ -1,11 +1,11 @@
 import type { ItemDTO } from "@/types/item";
 import { Badge } from "@/components/Badge";
 
-const BORDER_BY_STATUS: Record<string, string> = {
-  ok: "border-l-emerald-400",
-  acabando: "border-l-amber-400",
-  vencendo: "border-l-accent-500",
-  vencido: "border-l-red-500",
+const BG_BY_STATUS: Record<string, string> = {
+  ok: "bg-emerald-50 dark:bg-emerald-950/40",
+  acabando: "bg-amber-50 dark:bg-amber-950/40",
+  vencendo: "bg-accent-500/10 dark:bg-accent-500/15",
+  vencido: "bg-red-50 dark:bg-red-950/40",
 };
 
 function formatDate(iso: string | null) {
@@ -23,52 +23,44 @@ interface Props {
 
 export function ItemCard({ item, onConsume, onPurchase, onEdit }: Props) {
   return (
-    <div
-      className={`flex flex-col gap-2 rounded-2xl border-l-4 bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-brand-800 ${BORDER_BY_STATUS[item.status]}`}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-lg font-semibold">{item.name}</h3>
-        <span className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-xs text-brand-700 dark:bg-white/10 dark:text-brand-100">
-          {item.category}
-        </span>
+    <div className={`flex flex-col gap-3 rounded-3xl p-5 shadow-sm transition hover:shadow-md ${BG_BY_STATUS[item.status]}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h3 className="font-disp text-lg font-bold">{item.name}</h3>
+          <span className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">{item.category}</span>
+        </div>
+        <Badge status={item.status} />
       </div>
 
-      <Badge status={item.status} />
-
-      <div className="text-2xl font-bold text-brand-600 dark:text-brand-200">
-        {item.quantity} <span className="text-base font-medium">{item.unit}</span>
-        <span className="ml-2 text-xs font-normal text-brand-400 dark:text-brand-300">
-          minimo {item.minQuantity}
-        </span>
+      <div className="font-disp text-3xl font-bold">
+        {item.quantity} <span className="text-base font-semibold text-brand-900/50 dark:text-cream/50">{item.unit}</span>
       </div>
 
-      {item.expiryDate && (
-        <div className="text-xs text-brand-500 dark:text-brand-300">
-          Validade: {formatDate(item.expiryDate)}
-        </div>
-      )}
-      {item.lastPurchaseDate && (
-        <div className="text-xs text-brand-500 dark:text-brand-300">
-          Ultima compra: {formatDate(item.lastPurchaseDate)}
-        </div>
-      )}
+      <div className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">
+        minimo {item.minQuantity}
+        {item.expiryDate && <> &middot; valida {formatDate(item.expiryDate)}</>}
+        {item.lastPurchaseDate && <> &middot; compra {formatDate(item.lastPurchaseDate)}</>}
+      </div>
 
-      <div className="mt-1 flex gap-2">
+      <div className="mt-1 flex items-center gap-3">
         <button
           onClick={() => onConsume(item)}
-          className="flex-1 rounded-xl bg-red-500/10 py-2 text-sm font-bold text-red-600 transition hover:bg-red-500/20 dark:text-red-400"
+          aria-label="Usar uma unidade"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-xl font-extrabold text-red-500 transition hover:bg-red-200 dark:bg-red-500/20 dark:text-red-300"
         >
-          − Usar
+          −
         </button>
         <button
           onClick={() => onPurchase(item)}
-          className="flex-1 rounded-xl bg-emerald-500/10 py-2 text-sm font-bold text-emerald-600 transition hover:bg-emerald-500/20 dark:text-emerald-400"
+          aria-label="Marcar como comprado"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl font-extrabold text-emerald-600 transition hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300"
         >
-          + Comprei
+          +
         </button>
         <button
           onClick={() => onEdit(item)}
-          className="rounded-xl bg-brand-500/10 px-3 text-sm font-bold text-brand-600 transition hover:bg-brand-500/20 dark:text-brand-200"
+          aria-label="Editar item"
+          className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-900/10 text-base text-brand-900/60 transition hover:bg-brand-900/20 dark:bg-white/10 dark:text-cream/70"
         >
           ✎
         </button>

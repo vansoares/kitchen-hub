@@ -7,29 +7,31 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#eef6fb",
-          100: "#d7ebf5",
-          200: "#a9d2e8",
-          300: "#71b3d6",
-          400: "#3e8fbe",
-          500: "#1e5f8c", // cobalto - cor primaria
-          600: "#184c70",
-          700: "#12405f",
-          800: "#0f3450",
-          900: "#0b2740",
+          50: "#f1eefc",
+          100: "#e7e1fb",
+          200: "#cfc3f7",
+          300: "#ac98ef",
+          400: "#8367e0",
+          500: "#5b3ee8", // indigo - cor primaria
+          600: "#4a2fc4",
+          700: "#3d2a97",
+          800: "#2c2350",
+          900: "#1a1433",
         },
         accent: {
-          400: "#e0855f",
-          500: "#c96f4a", // terracota - acao/destaque
-          600: "#a8532f",
+          400: "#ff9494",
+          500: "#ff6b6b", // coral - CTA e status "vencendo"
+          600: "#e14f4f",
         },
-        cream: "#f7f2ea",
+        cream: "#f4f1fc",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-nunito)", "system-ui", "sans-serif"],
+        disp: ["var(--font-baloo)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         xl2: "1.25rem",
+        xl3: "1.375rem",
       },
     },
   },

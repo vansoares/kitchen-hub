@@ -6,6 +6,7 @@ export interface ItemInput {
   name: string;
   quantity: number;
   unit: string;
+  group: string;
   category: string;
   barcode: string | null;
   minQuantity: number;
@@ -30,11 +31,12 @@ async function logChange(
   });
 }
 
-export function getItems(search?: string, category?: string) {
+export function getItems(search?: string, category?: string, group?: string) {
   return prisma.item.findMany({
     where: {
       ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       ...(category ? { category } : {}),
+      ...(group ? { group } : {}),
     },
     orderBy: { name: "asc" },
   });
@@ -44,8 +46,9 @@ export function getItem(id: number) {
   return prisma.item.findUnique({ where: { id } });
 }
 
-export async function getCategories(): Promise<string[]> {
+export async function getCategories(group?: string): Promise<string[]> {
   const rows = await prisma.item.findMany({
+    where: group ? { group } : undefined,
     select: { category: true },
     distinct: ["category"],
     orderBy: { category: "asc" },
@@ -60,6 +63,7 @@ export function createItem(data: ItemInput) {
         name: data.name,
         quantity: data.quantity,
         unit: data.unit,
+        group: data.group,
         category: data.category,
         barcode: data.barcode,
         minQuantity: data.minQuantity,
@@ -81,6 +85,7 @@ export async function updateItem(id: number, data: Partial<ItemInput>) {
         ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.quantity !== undefined ? { quantity: data.quantity } : {}),
         ...(data.unit !== undefined ? { unit: data.unit } : {}),
+        ...(data.group !== undefined ? { group: data.group } : {}),
         ...(data.category !== undefined ? { category: data.category } : {}),
         ...(data.barcode !== undefined ? { barcode: data.barcode } : {}),
         ...(data.minQuantity !== undefined ? { minQuantity: data.minQuantity } : {}),
@@ -137,8 +142,8 @@ export function consumeItem(id: number, amount: number) {
 // no filtro `where`, entao o status - que ja precisa ser calculado em JS mesmo -
 // e usado diretamente para filtrar. Despensas domesticas sao pequenas, entao
 // trazer tudo e filtrar em memoria e mais simples que SQL raw aqui.
-export async function getAlerts() {
-  const items = await prisma.item.findMany();
+export async function getAlerts(group?: string) {
+  const items = await prisma.item.findMany({ where: group ? { group } : undefined });
   return items
     .filter((item) => computeStatus(item) !== "ok")
     .sort((a, b) => {

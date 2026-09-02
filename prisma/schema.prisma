@@ -16,6 +16,9 @@ model Item {
   name             String
   quantity         Float    @default(0)
   unit             String   @default("un")
+  // divisao de alto nivel da despensa - "category" continua livre e granular
+  // (ex: "Laticinios", "Limpeza"), "group" e so essas duas grandes abas.
+  group            String   @default("alimento") // "alimento" | "limpeza_higiene"
   category         String   @default("Outros")
   barcode          String?
   minQuantity      Float    @default(1)
@@ -28,6 +31,7 @@ model Item {
 
   @@index([name])
   @@index([category])
+  @@index([group])
 }
 
 // Todo evento que muda o estoque (criacao, compra, consumo, ajuste) fica

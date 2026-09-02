@@ -21,13 +21,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  listItems: (params: { search?: string; category?: string } = {}) => {
+  listItems: (params: { search?: string; category?: string; group?: string } = {}) => {
     const entries = Object.entries(params).filter(([, v]) => v) as [string, string][];
     const qs = new URLSearchParams(entries).toString();
     return request<ItemDTO[]>(`/items${qs ? `?${qs}` : ""}`);
   },
-  getAlerts: () => request<ItemDTO[]>("/items/alerts"),
-  getCategories: () => request<string[]>("/items/categories"),
+  getAlerts: (group?: string) => request<ItemDTO[]>(`/items/alerts${group ? `?group=${group}` : ""}`),
+  getCategories: (group?: string) =>
+    request<string[]>(`/items/categories${group ? `?group=${group}` : ""}`),
   createItem: (data: Record<string, unknown>) =>
     request<ItemDTO>("/items", { method: "POST", body: JSON.stringify(data) }),
   updateItem: (id: number, data: Record<string, unknown>) =>
@@ -41,6 +42,4 @@ export const api = {
   globalHistory: (limit = 100) => request<HistoryEntryDTO[]>(`/history?limit=${limit}`),
   lookupBarcode: (code: string) =>
     request<{ found: boolean; name?: string | null; category?: string | null }>(`/barcode/${code}`),
-  sendShoppingList: () =>
-    request<{ sent: boolean; count: number; message: string }>("/shopping-list/send", { method: "POST" }),
 };

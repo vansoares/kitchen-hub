@@ -1,10 +1,12 @@
 export type ItemStatus = "ok" | "acabando" | "vencendo" | "vencido";
+export type ItemGroup = "alimento" | "limpeza_higiene";
 
 export interface ItemDTO {
   id: number;
   name: string;
   quantity: number;
   unit: string;
+  group: ItemGroup;
   category: string;
   barcode: string | null;
   minQuantity: number;

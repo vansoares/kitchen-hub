@@ -4,13 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemForm } from "@/components/ItemForm";
 import { HistoryPanel } from "@/components/HistoryPanel";
+import { ShoppingListPanel } from "@/components/ShoppingListPanel";
 import { api } from "@/lib/apiClient";
-import type { ItemDTO, ItemStatus } from "@/types/item";
+import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
 type Notice = { type: "success" | "error"; text: string } | null;
 type SortBy = "name" | "expiry" | "status";
 
 const STATUS_PRIORITY: Record<ItemStatus, number> = { vencido: 0, vencendo: 1, acabando: 2, ok: 3 };
+
+const GROUP_TABS: { value: ItemGroup; label: string }[] = [
+  { value: "alimento", label: "🍽️ Alimentos" },
+  { value: "limpeza_higiene", label: "🧴 Limpeza & Higiene" },
+];
 
 function sortItems(items: ItemDTO[], sortBy: SortBy): ItemDTO[] {
   const sorted = [...items];
@@ -32,6 +38,7 @@ function sortItems(items: ItemDTO[], sortBy: SortBy): ItemDTO[] {
 export function PantryApp() {
   const [items, setItems] = useState<ItemDTO[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [group, setGroup] = useState<ItemGroup>("alimento");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [onlyAlerts, setOnlyAlerts] = useState(false);
@@ -39,9 +46,9 @@ export function PantryApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
-  const [sending, setSending] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [showHistory, setShowHistory] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
 
   const sortedItems = useMemo(() => sortItems(items, sortBy), [items, sortBy]);
 
@@ -50,8 +57,8 @@ export function PantryApp() {
     setError(null);
     try {
       const [itemList, cats] = await Promise.all([
-        onlyAlerts ? api.getAlerts() : api.listItems({ search, category }),
-        api.getCategories(),
+        onlyAlerts ? api.getAlerts(group) : api.listItems({ search, category, group }),
+        api.getCategories(group),
       ]);
       setItems(itemList);
       setCategories(cats);
@@ -60,7 +67,12 @@ export function PantryApp() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, onlyAlerts]);
+  }, [search, category, group, onlyAlerts]);
+
+  function handleGroupChange(next: ItemGroup) {
+    setGroup(next);
+    setCategory(""); // categorias sao especificas de cada grupo
+  }
 
   useEffect(() => {
     load();
@@ -103,32 +115,36 @@ export function PantryApp() {
     load();
   }
 
-  async function handleSendShoppingList() {
-    setSending(true);
-    try {
-      const result = await api.sendShoppingList();
-      setNotice({ type: result.sent ? "success" : "error", text: result.message });
-    } catch (err) {
-      setNotice({ type: "error", text: err instanceof Error ? err.message : "Falha ao enviar lista" });
-    } finally {
-      setSending(false);
-    }
-  }
-
   return (
     <div>
+      <div className="mb-4 flex gap-2 rounded-full bg-brand-100 p-1.5 dark:bg-white/5">
+        {GROUP_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => handleGroupChange(tab.value)}
+            className={`font-disp flex-1 rounded-full px-4 py-2.5 text-sm font-bold transition ${
+              group === tab.value
+                ? "bg-brand-500 text-white shadow-sm"
+                : "text-brand-600 hover:bg-white/60 dark:text-brand-200"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-5 flex flex-wrap gap-2">
         <input
           type="search"
           placeholder="Buscar item..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-[140px] flex-1 rounded-xl border-2 border-brand-500/20 bg-white px-4 py-2.5 outline-none focus:border-brand-500 dark:bg-brand-800 dark:text-cream"
+          className="min-w-[140px] flex-1 rounded-full bg-white px-5 py-2.5 font-medium outline-none placeholder:text-brand-300 dark:bg-brand-800 dark:text-cream"
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="min-w-[140px] rounded-xl border-2 border-brand-500/20 bg-white px-4 py-2.5 outline-none focus:border-brand-500 dark:bg-brand-800 dark:text-cream"
+          className="min-w-[140px] rounded-full bg-white px-5 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
         >
           <option value="">Todas categorias</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -136,7 +152,7 @@ export function PantryApp() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortBy)}
-          className="min-w-[140px] rounded-xl border-2 border-brand-500/20 bg-white px-4 py-2.5 outline-none focus:border-brand-500 dark:bg-brand-800 dark:text-cream"
+          className="min-w-[140px] rounded-full bg-white px-5 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
         >
           <option value="name">Ordenar: Nome</option>
           <option value="expiry">Ordenar: Validade</option>
@@ -144,30 +160,29 @@ export function PantryApp() {
         </select>
         <button
           onClick={() => setOnlyAlerts((v) => !v)}
-          className={`rounded-xl px-4 py-2.5 font-semibold transition ${
+          className={`rounded-full px-4 py-2.5 font-bold transition ${
             onlyAlerts
               ? "bg-accent-500 text-white"
-              : "bg-brand-500/10 text-brand-700 dark:text-brand-200"
+              : "bg-brand-100 text-brand-600 dark:bg-white/10 dark:text-brand-200"
           }`}
         >
           ⚠ Alertas
         </button>
         <button
           onClick={() => setShowHistory(true)}
-          className="rounded-xl bg-brand-500/10 px-4 py-2.5 font-semibold text-brand-700 transition dark:text-brand-200"
+          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
         >
           🕒 Historico
         </button>
         <button
-          onClick={handleSendShoppingList}
-          disabled={sending}
-          className="rounded-xl bg-brand-500/10 px-4 py-2.5 font-semibold text-brand-700 transition disabled:opacity-50 dark:text-brand-200"
+          onClick={() => setShowShoppingList(true)}
+          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
         >
-          {sending ? "Enviando..." : "📧 Enviar lista"}
+          🛒 Lista de compras
         </button>
         <button
           onClick={() => setEditing({})}
-          className="rounded-xl bg-brand-500 px-4 py-2.5 font-semibold text-white shadow-sm transition hover:bg-brand-600"
+          className="font-disp rounded-full bg-accent-500 px-5 py-2.5 font-bold text-white shadow-sm transition hover:bg-accent-600"
         >
           + Novo item
         </button>
@@ -196,6 +211,7 @@ export function PantryApp() {
       {editing && (
         <ItemForm
           initial={editing}
+          defaultGroup={group}
           onSave={handleSave}
           onCancel={() => setEditing(null)}
           onDelete={handleDelete}
@@ -203,6 +219,7 @@ export function PantryApp() {
       )}
 
       {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
+      {showShoppingList && <ShoppingListPanel onClose={() => setShowShoppingList(false)} />}
 
       {notice && (
         <div

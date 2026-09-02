@@ -12,7 +12,6 @@ Stack 100% JS/TS pensada pra deploy direto no Vercel.
 - **Tailwind CSS** - visual moderno, dark mode automático
 - **PWA** - instalável no celular, manifest gerado pelo Next (`src/app/manifest.ts`)
 - **html5-qrcode** - leitura de código de barras pela câmera
-- **Nodemailer** - envio da lista de compras por email
 
 > A versão anterior (Raspberry Pi + Python/FastAPI + SQLite, com launcher para
 > YouTube/streams) foi arquivada em [`legacy-raspberry-pi/`](legacy-raspberry-pi)
@@ -30,10 +29,9 @@ src/
 │       ├── auth/[...nextauth]/route.ts
 │       ├── items/                    # CRUD + alerts + categories
 │       ├── history/route.ts          # historico global
-│       ├── barcode/[code]/route.ts   # proxy Open Food Facts
-│       └── shopping-list/send/route.ts
-├── components/     # ItemCard, ItemForm, BarcodeScanner, Badge, Header...
-├── lib/            # prisma client, regras de negocio (pantry.ts), auth, email
+│       └── barcode/[code]/route.ts   # proxy Open Food Facts
+├── components/     # ItemCard, ItemForm, BarcodeScanner, ShoppingListPanel, HistoryPanel...
+├── lib/            # prisma client, regras de negocio (pantry.ts), auth
 ├── middleware.ts   # protege todas as rotas (paginas + API) por sessao
 └── types/item.ts   # tipos compartilhados
 
@@ -83,8 +81,7 @@ Status (`ok` / `acabando` / `vencendo` / `vencido`) é calculado on-the-fly em
    (Vercel Postgres/Neon) — isso já injeta `DATABASE_URL` automaticamente.
 3. Em **Settings → Environment Variables**, adicione as demais variáveis do
    `.env.example` (`NEXTAUTH_SECRET`, `NEXTAUTH_URL` = URL do seu deploy,
-   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`, e as `SMTP_*`
-   se for usar o envio de lista por email).
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`).
 4. No Google Cloud Console, adicione o redirect URI de produção:
    `https://<seu-app>.vercel.app/api/auth/callback/google`.
 5. Depois do primeiro deploy, aplique o schema no banco de produção:
@@ -104,13 +101,14 @@ middleware ([`src/middleware.ts`](src/middleware.ts)) protege **todas** as
 páginas e rotas de API: sem sessão válida, API responde 401 e páginas
 redirecionam pro login.
 
-## Lista de compras por email
+## Lista de compras
 
-O botão "📧 Enviar lista" manda por email os itens acabando/vencendo/vencidos
-(mesma lógica dos alertas). Precisa das variáveis `SMTP_*` configuradas (veja
-`.env.example` — funciona com Gmail usando uma
-["senha de app"](https://myaccount.google.com/apppasswords)). Sem essas
-variáveis, o botão mostra um aviso claro em vez de falhar silenciosamente.
+O botão "🛒 Lista de compras" mostra os itens acabando/vencendo/vencidos
+(mesma lógica dos alertas) com checkbox em cada um — pensado pra usar no
+celular dentro do mercado, marcando conforme vai pegando os itens. As marcações
+ficam salvas no `localStorage` do navegador (por dispositivo, não sincroniza
+entre celular/tela da cozinha) e um botão "Limpar" reseta pra próxima ida ao
+mercado.
 
 ## Leitor de código de barras
 

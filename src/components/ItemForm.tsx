@@ -3,51 +3,63 @@
 import { useState, type FormEvent } from "react";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { api } from "@/lib/apiClient";
-import type { ItemDTO } from "@/types/item";
+import type { ItemDTO, ItemGroup } from "@/types/item";
 
 const UNIDADES = ["un", "kg", "g", "l", "ml", "pct", "cx", "dz"];
-const CATEGORIAS_SUGERIDAS = [
-  "Graos e cereais", "Laticinios", "Hortifruti", "Carnes", "Limpeza",
-  "Higiene", "Bebidas", "Congelados", "Temperos", "Outros",
+
+const GROUPS: { value: ItemGroup; label: string }[] = [
+  { value: "alimento", label: "🍽️ Alimento" },
+  { value: "limpeza_higiene", label: "🧴 Limpeza/Higiene" },
 ];
+
+const CATEGORIAS_POR_GRUPO: Record<ItemGroup, string[]> = {
+  alimento: ["Graos e cereais", "Laticinios", "Hortifruti", "Carnes", "Bebidas", "Congelados", "Temperos", "Outros"],
+  limpeza_higiene: ["Limpeza", "Higiene", "Outros"],
+};
 
 interface FormState {
   name: string;
   quantity: number | string;
   unit: string;
+  group: ItemGroup;
   category: string;
   minQuantity: number | string;
   expiryDate: string;
   barcode: string;
 }
 
-const EMPTY: FormState = {
-  name: "",
-  quantity: 1,
-  unit: "un",
-  category: "Outros",
-  minQuantity: 1,
-  expiryDate: "",
-  barcode: "",
-};
+function emptyForm(defaultGroup: ItemGroup): FormState {
+  return {
+    name: "",
+    quantity: 1,
+    unit: "un",
+    group: defaultGroup,
+    category: "Outros",
+    minQuantity: 1,
+    expiryDate: "",
+    barcode: "",
+  };
+}
 
 interface Props {
   initial: Partial<ItemDTO> | null;
+  defaultGroup: ItemGroup;
   onSave: (data: Record<string, unknown>) => void;
   onCancel: () => void;
   onDelete: (item: ItemDTO) => void;
 }
 
-export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
+export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: Props) {
   const [form, setForm] = useState<FormState>(() => ({
-    ...EMPTY,
+    ...emptyForm(defaultGroup),
     ...(initial
       ? {
-          name: initial.name ?? EMPTY.name,
-          quantity: initial.quantity ?? EMPTY.quantity,
-          unit: initial.unit ?? EMPTY.unit,
-          category: initial.category ?? EMPTY.category,
-          minQuantity: initial.minQuantity ?? EMPTY.minQuantity,
+          name: initial.name ?? "",
+          quantity: initial.quantity ?? 1,
+          unit: initial.unit ?? "un",
+          group: initial.group ?? defaultGroup,
+          category: initial.category ?? "Outros",
+          minQuantity: initial.minQuantity ?? 1,
           expiryDate: initial.expiryDate ?? "",
           barcode: initial.barcode ?? "",
         }
@@ -56,9 +68,18 @@ export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
   const [scanning, setScanning] = useState(false);
   const [looking, setLooking] = useState(false);
   const isEditing = Boolean(initial?.id);
+  const categoriasSugeridas = CATEGORIAS_POR_GRUPO[form.group];
 
   function setField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handleGroupChange(group: ItemGroup) {
+    setForm((f) => ({
+      ...f,
+      group,
+      category: CATEGORIAS_POR_GRUPO[group].includes(f.category) ? f.category : "Outros",
+    }));
   }
 
   async function handleBarcodeDetected(code: string) {
@@ -98,10 +119,10 @@ export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
       onClick={onCancel}
     >
       <div
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-brand-800"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 shadow-xl dark:bg-brand-800"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-xl font-bold text-brand-700 dark:text-brand-100">
+        <h2 className="font-disp mb-4 text-xl font-bold text-brand-700 dark:text-brand-100">
           {isEditing ? "Editar item" : "Novo item"}
         </h2>
 
@@ -109,6 +130,25 @@ export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
           <BarcodeScanner onDetected={handleBarcodeDetected} onClose={() => setScanning(false)} />
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Field label="Tipo">
+              <div className="grid grid-cols-2 gap-2">
+                {GROUPS.map((g) => (
+                  <button
+                    key={g.value}
+                    type="button"
+                    onClick={() => handleGroupChange(g.value)}
+                    className={`rounded-full px-3 py-2 text-sm font-bold transition ${
+                      form.group === g.value
+                        ? "bg-brand-500 text-white"
+                        : "bg-brand-500/10 text-brand-700 dark:text-brand-200"
+                    }`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
             <Field label="Nome">
               <input
                 required
@@ -171,7 +211,7 @@ export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
                   className={inputClass}
                 />
                 <datalist id="categorias">
-                  {CATEGORIAS_SUGERIDAS.map((c) => <option key={c} value={c} />)}
+                  {categoriasSugeridas.map((c) => <option key={c} value={c} />)}
                 </datalist>
               </Field>
             </div>
@@ -202,7 +242,7 @@ export function ItemForm({ initial, onSave, onCancel, onDelete }: Props) {
                   Excluir
                 </button>
               )}
-              <button type="submit" className="flex-1 rounded-xl bg-brand-500 py-2.5 font-semibold text-white">
+              <button type="submit" className="font-disp flex-1 rounded-full bg-accent-500 py-2.5 font-bold text-white">
                 Salvar
               </button>
             </div>

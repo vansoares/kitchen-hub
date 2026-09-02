@@ -1,5 +1,5 @@
 import type { Item } from "@prisma/client";
-import type { ItemDTO, ItemStatus } from "@/types/item";
+import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
 // Itens vencendo dentro desse numero de dias entram no status "vencendo".
 export const EXPIRY_WARNING_DAYS = 3;
@@ -34,6 +34,7 @@ export function toItemDTO(item: Item): ItemDTO {
     name: item.name,
     quantity: item.quantity,
     unit: item.unit,
+    group: item.group as ItemGroup,
     category: item.category,
     barcode: item.barcode,
     minQuantity: item.minQuantity,

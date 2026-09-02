@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Baloo_2, Nunito_Sans } from "next/font/google";
 import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const baloo = Baloo_2({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-baloo" });
+const nunito = Nunito_Sans({ subsets: ["latin"], variable: "--font-nunito" });
 
 export const metadata: Metadata = {
   title: "KitchenHub",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1e5f8c",
+  themeColor: "#5b3ee8",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -35,7 +36,7 @@ const THEME_INIT_SCRIPT = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${baloo.variable} ${nunito.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-cream font-sans text-brand-900 antialiased dark:bg-brand-900 dark:text-cream">
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <RegisterSW />

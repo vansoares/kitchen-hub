@@ -17,13 +17,13 @@ export function ThemeToggle() {
   }
 
   // Evita mostrar o icone errado por um instante antes do useEffect rodar.
-  if (isDark === null) return <div className="h-8 w-9" />;
+  if (isDark === null) return <div className="h-9 w-9" />;
 
   return (
     <button
       onClick={toggle}
       aria-label="Alternar tema"
-      className="flex h-8 w-9 items-center justify-center rounded-lg bg-white/15 text-sm transition hover:bg-white/25"
+      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm transition hover:bg-white/30"
     >
       {isDark ? "☀️" : "🌙"}
     </button>
