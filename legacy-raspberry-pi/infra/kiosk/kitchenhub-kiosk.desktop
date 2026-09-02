@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=KitchenHub Kiosk
+Comment=Abre o KitchenHub em tela cheia no boot
+Exec=/home/pi/KitchenHub/infra/kiosk/kitchenhub-kiosk.sh
+X-GNOME-Autostart-enabled=true

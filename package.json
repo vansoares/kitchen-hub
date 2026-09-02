@@ -1,0 +1,36 @@
+{
+  "name": "kitchenhub",
+  "private": true,
+  "version": "2.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "html5-qrcode": "^2.3.8",
+    "next": "^15.5.25",
+    "next-auth": "^4.24.15",
+    "nodemailer": "^9.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "@types/nodemailer": "^8.0.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.26",
+    "prisma": "^5.20.0",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4"
+  },
+  "overrides": {
+    "nodemailer": "^9.1.1",
+    "postcss": "^8.5.26"
+  }
+}

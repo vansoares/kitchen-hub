@@ -1,0 +1,340 @@
+/* KitchenHub - identidade visual "azulejo portugues", compartilhada com o Azulejo (habit tracker):
+   azul cobalto + branco cru + terracota, padroes geometricos de ladrilho. */
+:root {
+  --azul: #1e5f8c;
+  --azul-escuro: #12405f;
+  --azul-claro: #4f8fbf;
+  --creme: #f4ede1;
+  --branco: #fffaf3;
+  --terracota: #c96f4a;
+  --terracota-escuro: #a8532f;
+  --verde-ok: #4c8c5f;
+  --amarelo-alerta: #d9a441;
+  --vermelho-alerta: #c9503f;
+  --texto: #2b2420;
+  --texto-suave: #6b5f54;
+  --sombra: 0 6px 18px rgba(18, 64, 95, 0.18);
+  --raio: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--texto);
+  background-color: var(--creme);
+  /* subtle tile-grid backdrop, azulejo-style */
+  background-image:
+    linear-gradient(45deg, rgba(30, 95, 140, 0.05) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(30, 95, 140, 0.05) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(30, 95, 140, 0.05) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(30, 95, 140, 0.05) 75%);
+  background-size: 48px 48px;
+  background-position: 0 0, 0 24px, 24px -24px, -24px 0px;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--azul);
+  color: var(--branco);
+  box-shadow: var(--sombra);
+}
+
+.topbar h1 {
+  font-size: 1.3rem;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.topbar .voltar {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: var(--branco);
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar .spacer {
+  flex: 1;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---------- Launcher ---------- */
+.launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  padding: 12px;
+}
+
+.launcher-tile {
+  aspect-ratio: 1;
+  border-radius: var(--raio);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--branco);
+  box-shadow: var(--sombra);
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: transform 0.12s ease;
+}
+
+.launcher-tile:active {
+  transform: scale(0.95);
+}
+
+.launcher-tile .icone {
+  font-size: 3rem;
+}
+
+.launcher-tile.tile-despensa { background: linear-gradient(160deg, var(--azul), var(--azul-escuro)); }
+.launcher-tile.tile-youtube { background: linear-gradient(160deg, #e0554a, #a8332a); }
+.launcher-tile.tile-streams { background: linear-gradient(160deg, var(--terracota), var(--terracota-escuro)); }
+.launcher-tile.tile-outro { background: linear-gradient(160deg, #7a6a58, #55483a); }
+
+/* ---------- Pantry ---------- */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar input[type="search"],
+.toolbar select {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(30, 95, 140, 0.2);
+  background: var(--branco);
+  font-size: 1rem;
+}
+
+.btn {
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.btn-primary { background: var(--azul); color: var(--branco); }
+.btn-terracota { background: var(--terracota); color: var(--branco); }
+.btn-secundario { background: rgba(30, 95, 140, 0.12); color: var(--azul-escuro); }
+.btn-perigo { background: var(--vermelho-alerta); color: var(--branco); }
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.item-card {
+  background: var(--branco);
+  border-radius: var(--raio);
+  padding: 16px;
+  box-shadow: var(--sombra);
+  border-left: 8px solid var(--verde-ok);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-card.status-acabando { border-left-color: var(--amarelo-alerta); }
+.item-card.status-vencendo { border-left-color: var(--terracota); }
+.item-card.status-vencido { border-left-color: var(--vermelho-alerta); }
+
+.item-card .linha1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.item-card h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.item-card .categoria {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  background: rgba(30, 95, 140, 0.08);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.item-card .quantidade {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--azul-escuro);
+}
+
+.item-card .validade {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--branco);
+  width: fit-content;
+}
+
+.badge.status-ok { background: var(--verde-ok); }
+.badge.status-acabando { background: var(--amarelo-alerta); }
+.badge.status-vencendo { background: var(--terracota); }
+.badge.status-vencido { background: var(--vermelho-alerta); }
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.item-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.acao-consumir { background: rgba(201, 80, 63, 0.12); color: var(--vermelho-alerta); }
+.acao-comprar { background: rgba(76, 140, 95, 0.14); color: var(--verde-ok); }
+.acao-editar { background: rgba(30, 95, 140, 0.12); color: var(--azul-escuro); }
+
+/* ---------- Modal / form ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 64, 95, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--branco);
+  border-radius: var(--raio);
+  padding: 24px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--sombra);
+}
+
+.modal h2 {
+  margin-top: 0;
+  color: var(--azul-escuro);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.campo input, .campo select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(30, 95, 140, 0.2);
+  font-size: 1rem;
+}
+
+.linha-dupla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* grid/flex items default to min-width:auto, which lets an <input>'s
+   intrinsic size force overflow past its track - override it here. */
+.linha-dupla .campo, .campo, .modal-acoes button {
+  min-width: 0;
+}
+
+.modal-acoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.modal-acoes button {
+  flex: 1;
+}
+
+.vazio {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--texto-suave);
+}
+
+.scanner-box {
+  border-radius: var(--raio);
+  overflow: hidden;
+  border: 3px solid var(--azul);
+  margin-bottom: 14px;
+}

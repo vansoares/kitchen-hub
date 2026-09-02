@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Deixa o app com "cara de app": sem selecao de texto acidental na despensa,
+   mas ainda selecionavel dentro de inputs. */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}

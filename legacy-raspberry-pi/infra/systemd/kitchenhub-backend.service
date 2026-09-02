@@ -1,0 +1,26 @@
+; Copie este arquivo para /etc/systemd/system/kitchenhub-backend.service
+; e ajuste WorkingDirectory/User se o caminho do projeto for diferente.
+;
+; Instalar:
+;   sudo cp infra/systemd/kitchenhub-backend.service /etc/systemd/system/
+;   sudo systemctl daemon-reload
+;   sudo systemctl enable --now kitchenhub-backend
+;
+; Ver logs:
+;   journalctl -u kitchenhub-backend -f
+
+[Unit]
+Description=KitchenHub - API + frontend estatico
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/KitchenHub/backend
+ExecStart=/home/pi/KitchenHub/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,47 @@
+// KitchenHub - modelo de dados da despensa.
+// DATABASE_URL deve ser a connection string "pooled" do Neon/Vercel Postgres
+// (funcoes serverless abrem/fecham conexao a cada invocacao).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Item {
+  id               Int      @id @default(autoincrement())
+  name             String
+  quantity         Float    @default(0)
+  unit             String   @default("un")
+  category         String   @default("Outros")
+  barcode          String?
+  minQuantity      Float    @default(1)
+  expiryDate       DateTime? @db.Date
+  lastPurchaseDate DateTime? @db.Date
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  logs ConsumptionLog[]
+
+  @@index([name])
+  @@index([category])
+}
+
+// Todo evento que muda o estoque (criacao, compra, consumo, ajuste) fica
+// registrado aqui - e a base do historico de consumo.
+model ConsumptionLog {
+  id            Int      @id @default(autoincrement())
+  itemId        Int?
+  item          Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  itemName      String // denormalizado: historico sobrevive a exclusao do item
+  change        Float // positivo = entrada de estoque, negativo = consumo
+  quantityAfter Float
+  reason        String // "compra" | "consumo" | "ajuste" | "criacao"
+  timestamp     DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([itemId])
+}
