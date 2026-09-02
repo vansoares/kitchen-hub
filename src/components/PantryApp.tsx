@@ -19,6 +19,14 @@ const GROUP_TABS: { value: ItemGroup; label: string }[] = [
   { value: "limpeza_higiene", label: "🧴 Limpeza & Higiene" },
 ];
 
+function formatMoney(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function capitalize(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function sortItems(items: ItemDTO[], sortBy: SortBy): ItemDTO[] {
   const sorted = [...items];
   if (sortBy === "name") {
@@ -36,8 +44,15 @@ function sortItems(items: ItemDTO[], sortBy: SortBy): ItemDTO[] {
   return sorted;
 }
 
-export function PantryApp() {
+interface Stats {
+  totalItems: number;
+  alerts: number;
+  spentThisMonth: number;
+}
+
+export function PantryApp({ userName }: { userName?: string | null }) {
   const [items, setItems] = useState<ItemDTO[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [group, setGroup] = useState<ItemGroup>("alimento");
   const [search, setSearch] = useState("");
@@ -80,6 +95,21 @@ export function PantryApp() {
     }
   }, [search, category, group, onlyAlerts]);
 
+  // Resumo do topo: numeros gerais da despensa, independente dos filtros/aba
+  // ativos - por isso busca separado do `load()` principal.
+  const loadStats = useCallback(async () => {
+    try {
+      const [allItems, alerts, spending] = await Promise.all([
+        api.listItems({}),
+        api.getAlerts(),
+        api.getSpendingSummary(),
+      ]);
+      setStats({ totalItems: allItems.length, alerts: alerts.length, spentThisMonth: spending.totalThisMonth });
+    } catch {
+      /* resumo e cosmetico - falha aqui nao deve travar a tela principal */
+    }
+  }, []);
+
   function handleGroupChange(next: ItemGroup) {
     setGroup(next);
     setCategory(""); // categorias sao especificas de cada grupo
@@ -90,6 +120,10 @@ export function PantryApp() {
   }, [load]);
 
   useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 4000);
     return () => clearTimeout(t);
@@ -98,11 +132,13 @@ export function PantryApp() {
   async function handleConsume(item: ItemDTO) {
     await api.consumeItem(item.id, 1);
     load();
+    loadStats();
   }
 
   async function handlePurchase(item: ItemDTO) {
     await api.purchaseItem(item.id, 1);
     load();
+    loadStats();
   }
 
   async function handleSave(data: Record<string, unknown>) {
@@ -114,6 +150,7 @@ export function PantryApp() {
       }
       setEditing(null);
       load();
+      loadStats();
     } catch (err) {
       setNotice({ type: "error", text: err instanceof Error ? err.message : "Erro ao salvar item" });
     }
@@ -124,10 +161,52 @@ export function PantryApp() {
     await api.deleteItem(item.id);
     setEditing(null);
     load();
+    loadStats();
   }
+
+  const firstName = userName?.split(" ")[0];
+  const today = capitalize(
+    new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })
+  );
 
   return (
     <div>
+      <div className="mb-5">
+        <h2 className="font-disp text-2xl font-bold">
+          {firstName ? `Oi, ${firstName}! 👋` : "Sua despensa"}
+        </h2>
+        <p className="text-sm text-brand-900/50 dark:text-cream/50">{today}</p>
+      </div>
+
+      {stats && (
+        <div className="mb-5 grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-white p-4 dark:bg-brand-800">
+            <div className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">Itens</div>
+            <div className="font-disp text-2xl font-bold text-brand-600 dark:text-brand-200">
+              {stats.totalItems}
+            </div>
+          </div>
+          <button
+            onClick={() => setOnlyAlerts(true)}
+            className="rounded-2xl bg-accent-500/10 p-4 text-left transition hover:bg-accent-500/20"
+          >
+            <div className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">Atencao</div>
+            <div className="font-disp text-2xl font-bold text-accent-600 dark:text-accent-400">
+              {stats.alerts}
+            </div>
+          </button>
+          <button
+            onClick={() => setShowBalance(true)}
+            className="rounded-2xl bg-brand-100 p-4 text-left transition hover:bg-brand-200 dark:bg-white/5 dark:hover:bg-white/10"
+          >
+            <div className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">Gasto/mes</div>
+            <div className="font-disp text-xl font-bold text-brand-600 dark:text-brand-200">
+              {formatMoney(stats.spentThisMonth)}
+            </div>
+          </button>
+        </div>
+      )}
+
       <div className="mb-4 flex gap-2 rounded-full bg-brand-100 p-1.5 dark:bg-white/5">
         {GROUP_TABS.map((tab) => (
           <button
@@ -230,8 +309,22 @@ export function PantryApp() {
         />
       )}
 
-      {showShoppingList && <ShoppingListPanel onClose={() => setShowShoppingList(false)} />}
-      {showBalance && <BalancePanel onClose={() => setShowBalance(false)} />}
+      {showShoppingList && (
+        <ShoppingListPanel
+          onClose={() => {
+            setShowShoppingList(false);
+            loadStats();
+          }}
+        />
+      )}
+      {showBalance && (
+        <BalancePanel
+          onClose={() => {
+            setShowBalance(false);
+            loadStats();
+          }}
+        />
+      )}
 
       {notice && (
         <div

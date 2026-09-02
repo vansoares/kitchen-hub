@@ -1,4 +1,5 @@
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { Footer } from "@/components/Footer";
 
 const ERROR_MESSAGES: Record<string, string> = {
   AccessDenied: "Esse email nao tem acesso a este KitchenHub.",
@@ -14,7 +15,7 @@ export default async function SignInPage({
   const error = params.error ? ERROR_MESSAGES[params.error] ?? ERROR_MESSAGES.Default : null;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-6 text-center">
+    <main className="relative flex min-h-screen flex-col items-center justify-center gap-8 p-6 text-center">
       <div>
         <h1 className="text-4xl font-bold tracking-tight text-brand-500 dark:text-brand-200">
           KitchenHub
@@ -29,6 +30,10 @@ export default async function SignInPage({
       )}
 
       <GoogleSignInButton callbackUrl={params.callbackUrl ?? "/"} />
+
+      <div className="absolute bottom-0 w-full">
+        <Footer />
+      </div>
     </main>
   );
 }

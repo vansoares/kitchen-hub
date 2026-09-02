@@ -24,23 +24,20 @@ src/
 ├── app/
 │   ├── page.tsx             # despensa
 │   ├── receitas/page.tsx    # receitas salvas
-│   ├── cardapios/page.tsx   # cardapios (agregam receitas)
 │   ├── signin/page.tsx      # login
 │   ├── manifest.ts          # manifest da PWA (inclui shortcuts)
 │   └── api/
 │       ├── auth/[...nextauth]/route.ts
 │       ├── items/                    # CRUD + alerts + categories
-│       ├── history/route.ts          # historico global
 │       ├── recipes/                  # CRUD de receitas
-│       ├── menus/                    # CRUD de cardapios + quantidades agregadas
 │       ├── purchases/                # registro de gastos + balanco
 │       └── barcode/[code]/route.ts   # proxy Open Food Facts
-├── components/     # ItemCard, ItemForm, ShoppingListPanel, BalancePanel, RecipesApp, MenusApp...
-├── lib/            # prisma client, regras de negocio (pantry/recipes/menus/purchases), auth
+├── components/     # ItemCard, ItemForm, ShoppingListPanel, BalancePanel, RecipesApp...
+├── lib/            # prisma client, regras de negocio (pantry/recipes/purchases), auth
 ├── middleware.ts   # protege todas as rotas (paginas + API) por sessao
 └── types/          # tipos compartilhados
 
-prisma/schema.prisma  # Item, ConsumptionLog, Recipe, RecipeIngredient, Menu, MenuRecipe, Purchase
+prisma/schema.prisma  # Item, ConsumptionLog, Recipe, RecipeIngredient, Purchase
 ```
 
 ## Modelo de dados
@@ -57,12 +54,6 @@ Status (`ok` / `acabando` / `vencendo` / `vencido`) é calculado on-the-fly em
 **Recipe** (receita): título, porções que rende, modo de preparo, lista de
 `RecipeIngredient` (nome livre + quantidade + unidade — não precisa ser um
 item da despensa).
-
-**Menu** (cardápio): nome + lista de receitas incluídas, cada uma com quantas
-porções entram naquele cardápio. As quantidades totais de ingredientes
-([`src/lib/menus.ts:aggregateIngredients`](src/lib/menus.ts)) são sempre
-*calculadas* somando `ingrediente × (porções pedidas / porções base da receita)`
-— nunca guardadas, então editar uma receita atualiza todos os cardápios que a usam.
 
 **Purchase**: valor total gasto numa ida ao mercado (registrado ao final da
 lista de compras), usado pra montar o balanço de gastos.
@@ -124,6 +115,12 @@ middleware ([`src/middleware.ts`](src/middleware.ts)) protege **todas** as
 páginas e rotas de API: sem sessão válida, API responde 401 e páginas
 redirecionam pro login.
 
+## Resumo da despensa
+
+No topo da tela principal, uma saudação com o nome de quem logou e três
+cartões (itens na despensa, itens que precisam de atenção, gasto do mês) —
+os dois últimos são clicáveis e já abrem os alertas / o balanço.
+
 ## Lista de compras
 
 O botão "🛒 Lista de compras" mostra os itens acabando/vencendo/vencidos
@@ -139,14 +136,11 @@ No formulário de novo/editar item, o botão 📷 abre a câmera (via
 `html5-qrcode`) e consulta a Open Food Facts (gratuita, sem chave) pra
 pré-preencher nome e categoria. Funciona melhor no celular.
 
-## Receitas e cardápios
+## Receitas
 
-Na aba "Receitas", salve pratos com título, quantas porções rendem e a lista
-de ingredientes (nome + quantidade + unidade, livre — não precisa bater com
-os itens da despensa). Na aba "Cardápios", monte um conjunto de receitas
-(ex: "Jantar de sexta") escolhendo quantas porções de cada uma entram — a
-tela mostra a **quantidade total agregada** de cada ingrediente, somando e
-escalando os ingredientes de todas as receitas escolhidas.
+Na aba "Receitas", salve pratos com título, quantas porções rendem, modo de
+preparo e a lista de ingredientes (nome + quantidade + unidade, livre — não
+precisa bater com os itens da despensa).
 
 ## Balanço de gastos
 

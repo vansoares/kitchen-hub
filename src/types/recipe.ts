@@ -14,38 +14,3 @@ export interface RecipeDTO {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface MenuRecipeDTO {
-  id: number;
-  recipeId: number;
-  recipeTitle: string;
-  recipeServings: number;
-  servings: number;
-}
-
-export interface MenuItemDTO {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-}
-
-export interface AggregatedIngredientDTO {
-  name: string;
-  unit: string;
-  quantity: number;
-}
-
-export interface MenuDTO {
-  id: number;
-  name: string;
-  quantity: number;
-  recipes: MenuRecipeDTO[];
-  items: MenuItemDTO[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface MenuDetailDTO extends MenuDTO {
-  totalIngredients: AggregatedIngredientDTO[];
-}
