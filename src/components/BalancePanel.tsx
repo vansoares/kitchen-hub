@@ -77,6 +77,39 @@ export function BalancePanel({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
 
+              {summary.monthly.some((m) => m.total > 0) && (
+                <div>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-brand-400">
+                    Gasto por mes
+                  </h3>
+                  <div className="flex items-end gap-3">
+                    {summary.monthly.map((m, i) => {
+                      const max = Math.max(...summary.monthly.map((x) => x.total), 1);
+                      const heightPct = Math.max((m.total / max) * 100, 3);
+                      const isCurrent = i === summary.monthly.length - 1;
+                      return (
+                        <div key={m.month} className="flex flex-1 flex-col items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-brand-900/60 dark:text-cream/60">
+                            {m.total > 0 ? Math.round(m.total) : ""}
+                          </span>
+                          <div className="flex h-24 w-full items-end">
+                            <div
+                              className={`w-full rounded-t-lg transition-all ${
+                                isCurrent ? "bg-accent-500" : "bg-brand-300 dark:bg-brand-600"
+                              }`}
+                              style={{ height: `${heightPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-semibold text-brand-900/50 dark:text-cream/50">
+                            {m.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-400">
                   Ultimas compras
