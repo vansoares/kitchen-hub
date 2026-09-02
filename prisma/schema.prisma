@@ -77,16 +77,21 @@ model RecipeIngredient {
   @@index([recipeId])
 }
 
-// Cardapio = um conjunto de receitas com "quantas porcoes" de cada uma vai
-// entrar; a lista de quantidades totais e calculada (nao guardada), somando
-// os ingredientes de cada receita escalados por porcoes/servings da receita.
+// Cardapio = um conjunto de receitas (com "quantas porcoes" de cada uma vai
+// entrar) e/ou itens soltos (sem precisar cadastrar uma Receita formal antes -
+// bom pra uma marmita simples tipo "frango + arroz + brocolis"). A lista de
+// quantidades totais e calculada (nao guardada), somando os ingredientes de
+// cada receita escalados por porcoes/servings da receita, mais os itens soltos.
+// "quantity" e o estoque de porcoes/marmitas ja prontas guardadas (freezer etc).
 model Menu {
   id        Int      @id @default(autoincrement())
   name      String
+  quantity  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   recipes MenuRecipe[]
+  items   MenuItem[]
 
   @@index([name])
 }
@@ -101,6 +106,19 @@ model MenuRecipe {
 
   @@index([menuId])
   @@index([recipeId])
+}
+
+// Item solto de um cardapio - igual RecipeIngredient, mas direto no cardapio,
+// sem precisar de uma Receita formal.
+model MenuItem {
+  id       Int    @id @default(autoincrement())
+  menuId   Int
+  menu     Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name     String
+  quantity Float
+  unit     String @default("un")
+
+  @@index([menuId])
 }
 
 // Valor gasto registrado ao final de uma ida ao mercado (lista de compras),

@@ -27,9 +27,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
   const menu = await menus.updateMenu(id, {
     name: body.name,
+    quantity: Number(body.quantity) || 0,
     recipes: (body.recipes ?? []).map((r: { recipeId: number; servings: number }) => ({
       recipeId: Number(r.recipeId),
       servings: Number(r.servings) || 1,
+    })),
+    items: (body.items ?? []).map((i: { name: string; quantity: number; unit: string }) => ({
+      name: i.name,
+      quantity: Number(i.quantity) || 0,
+      unit: i.unit || "un",
     })),
   });
 

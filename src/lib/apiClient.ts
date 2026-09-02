@@ -1,4 +1,4 @@
-import type { HistoryEntryDTO, ItemDTO } from "@/types/item";
+import type { ItemDTO } from "@/types/item";
 import type { MenuDetailDTO, MenuDTO, RecipeDTO } from "@/types/recipe";
 import type { PurchaseDTO, SpendingSummaryDTO } from "@/types/purchase";
 
@@ -40,8 +40,6 @@ export const api = {
     request<ItemDTO>(`/items/${id}/purchase`, { method: "POST", body: JSON.stringify({ amount }) }),
   consumeItem: (id: number, amount: number) =>
     request<ItemDTO>(`/items/${id}/consume`, { method: "POST", body: JSON.stringify({ amount }) }),
-  itemHistory: (id: number) => request<HistoryEntryDTO[]>(`/items/${id}/history`),
-  globalHistory: (limit = 100) => request<HistoryEntryDTO[]>(`/history?limit=${limit}`),
   lookupBarcode: (code: string) =>
     request<{ found: boolean; name?: string | null; category?: string | null }>(`/barcode/${code}`),
 
@@ -60,6 +58,16 @@ export const api = {
   updateMenu: (id: number, data: Record<string, unknown>) =>
     request<MenuDetailDTO>(`/menus/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteMenu: (id: number) => request<void>(`/menus/${id}`, { method: "DELETE" }),
+  prepareMenu: (id: number, amount: number) =>
+    request<{ id: number; quantity: number }>(`/menus/${id}/prepare`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+  consumeMenu: (id: number, amount: number) =>
+    request<{ id: number; quantity: number }>(`/menus/${id}/consume`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
 
   getSpendingSummary: () => request<SpendingSummaryDTO>("/purchases"),
   createPurchase: (total: number, note?: string) =>

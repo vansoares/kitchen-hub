@@ -16,13 +16,3 @@ export interface ItemDTO {
   updatedAt: string;
   status: ItemStatus;
 }
-
-export interface HistoryEntryDTO {
-  id: number;
-  itemId: number | null;
-  itemName: string;
-  change: number;
-  quantityAfter: number;
-  reason: string;
-  timestamp: string;
-}

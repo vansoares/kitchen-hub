@@ -23,6 +23,13 @@ export interface MenuRecipeDTO {
   servings: number;
 }
 
+export interface MenuItemDTO {
+  id: number;
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
 export interface AggregatedIngredientDTO {
   name: string;
   unit: string;
@@ -32,7 +39,9 @@ export interface AggregatedIngredientDTO {
 export interface MenuDTO {
   id: number;
   name: string;
+  quantity: number;
   recipes: MenuRecipeDTO[];
+  items: MenuItemDTO[];
   createdAt: string;
   updatedAt: string;
 }

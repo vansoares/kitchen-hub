@@ -153,11 +153,3 @@ export async function getAlerts(group?: string) {
       return a.expiryDate.getTime() - b.expiryDate.getTime();
     });
 }
-
-export function getHistory(itemId?: number, limit = 100) {
-  return prisma.consumptionLog.findMany({
-    where: itemId !== undefined ? { itemId } : undefined,
-    orderBy: { timestamp: "desc" },
-    take: limit,
-  });
-}

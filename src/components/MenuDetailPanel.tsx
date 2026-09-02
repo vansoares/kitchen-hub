@@ -8,20 +8,35 @@ interface Props {
   menuId: number;
   onClose: () => void;
   onEdit: () => void;
+  onStockChange?: () => void;
 }
 
-export function MenuDetailPanel({ menuId, onClose, onEdit }: Props) {
+export function MenuDetailPanel({ menuId, onClose, onEdit, onStockChange }: Props) {
   const [menu, setMenu] = useState<MenuDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  function load() {
     api
       .getMenu(menuId)
       .then(setMenu)
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar cardapio"))
       .finally(() => setLoading(false));
-  }, [menuId]);
+  }
+
+  useEffect(load, [menuId]);
+
+  async function handlePrepare() {
+    await api.prepareMenu(menuId, 1);
+    load();
+    onStockChange?.();
+  }
+
+  async function handleConsume() {
+    await api.consumeMenu(menuId, 1);
+    load();
+    onStockChange?.();
+  }
 
   return (
     <div
@@ -58,16 +73,60 @@ export function MenuDetailPanel({ menuId, onClose, onEdit }: Props) {
 
           {menu && (
             <div className="flex flex-col gap-6">
-              <div>
-                <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-400">Receitas</h3>
-                <ul className="flex flex-col gap-1">
-                  {menu.recipes.map((r) => (
-                    <li key={r.id} className="text-sm">
-                      {r.recipeTitle} &times; {r.servings} porcoes
-                    </li>
-                  ))}
-                </ul>
+              <div className="flex items-center justify-between rounded-2xl bg-accent-500/10 p-4">
+                <div>
+                  <div className="text-xs font-semibold text-brand-900/60 dark:text-cream/60">
+                    Porcoes prontas no freezer
+                  </div>
+                  <div className="font-disp text-3xl font-bold text-accent-600 dark:text-accent-400">
+                    {menu.quantity}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleConsume}
+                    aria-label="Comi uma porcao"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100 text-xl font-extrabold text-red-500 dark:bg-red-500/20 dark:text-red-300"
+                  >
+                    −
+                  </button>
+                  <button
+                    onClick={handlePrepare}
+                    aria-label="Preparei mais uma porcao"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-xl font-extrabold text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
+
+              {menu.recipes.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-400">Receitas</h3>
+                  <ul className="flex flex-col gap-1">
+                    {menu.recipes.map((r) => (
+                      <li key={r.id} className="text-sm">
+                        {r.recipeTitle} &times; {r.servings} porcoes
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {menu.items.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-400">
+                    Itens soltos
+                  </h3>
+                  <ul className="flex flex-col gap-1">
+                    {menu.items.map((i) => (
+                      <li key={i.id} className="text-sm">
+                        {i.quantity} {i.unit} {i.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div>
                 <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-400">

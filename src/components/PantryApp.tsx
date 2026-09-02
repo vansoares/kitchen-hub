@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemForm } from "@/components/ItemForm";
-import { HistoryPanel } from "@/components/HistoryPanel";
 import { ShoppingListPanel } from "@/components/ShoppingListPanel";
 import { BalancePanel } from "@/components/BalancePanel";
+import { ActionMenu } from "@/components/ActionMenu";
 import { api } from "@/lib/apiClient";
 import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
@@ -48,7 +48,6 @@ export function PantryApp() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [showHistory, setShowHistory] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
 
@@ -145,65 +144,60 @@ export function PantryApp() {
         ))}
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-col gap-2">
         <input
           type="search"
           placeholder="Buscar item..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="min-w-[140px] flex-1 rounded-full bg-white px-5 py-2.5 font-medium outline-none placeholder:text-brand-300 dark:bg-brand-800 dark:text-cream"
+          className="w-full rounded-full bg-white px-5 py-2.5 font-medium outline-none placeholder:text-brand-300 dark:bg-brand-800 dark:text-cream"
         />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="min-w-[140px] rounded-full bg-white px-5 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
-        >
-          <option value="">Todas categorias</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortBy)}
-          className="min-w-[140px] rounded-full bg-white px-5 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
-        >
-          <option value="name">Ordenar: Nome</option>
-          <option value="expiry">Ordenar: Validade</option>
-          <option value="status">Ordenar: Status</option>
-        </select>
-        <button
-          onClick={() => setOnlyAlerts((v) => !v)}
-          className={`rounded-full px-4 py-2.5 font-bold transition ${
-            onlyAlerts
-              ? "bg-accent-500 text-white"
-              : "bg-brand-100 text-brand-600 dark:bg-white/10 dark:text-brand-200"
-          }`}
-        >
-          ⚠ Alertas
-        </button>
-        <button
-          onClick={() => setShowHistory(true)}
-          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
-        >
-          🕒 Historico
-        </button>
-        <button
-          onClick={() => setShowShoppingList(true)}
-          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
-        >
-          🛒 Lista de compras
-        </button>
-        <button
-          onClick={() => setShowBalance(true)}
-          className="rounded-full bg-brand-100 px-4 py-2.5 font-bold text-brand-600 transition dark:bg-white/10 dark:text-brand-200"
-        >
-          💰 Balanco
-        </button>
-        <button
-          onClick={() => setEditing({})}
-          className="font-disp rounded-full bg-accent-500 px-5 py-2.5 font-bold text-white shadow-sm transition hover:bg-accent-600"
-        >
-          + Novo item
-        </button>
+
+        <div className="flex gap-2">
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="min-w-0 flex-1 rounded-full bg-white px-4 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
+          >
+            <option value="">Todas categorias</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="min-w-0 flex-1 rounded-full bg-white px-4 py-2.5 font-medium text-brand-600 outline-none dark:bg-brand-800 dark:text-cream"
+          >
+            <option value="name">Ordenar: Nome</option>
+            <option value="expiry">Ordenar: Validade</option>
+            <option value="status">Ordenar: Status</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setOnlyAlerts((v) => !v)}
+            className={`rounded-full px-4 py-2.5 font-bold transition ${
+              onlyAlerts
+                ? "bg-accent-500 text-white"
+                : "bg-brand-100 text-brand-600 dark:bg-white/10 dark:text-brand-200"
+            }`}
+          >
+            ⚠ Alertas
+          </button>
+          <div className="flex-1" />
+          <ActionMenu
+            items={[
+              { label: "🛒 Lista de compras", onClick: () => setShowShoppingList(true) },
+              { label: "💰 Balanco", onClick: () => setShowBalance(true) },
+            ]}
+          />
+          <button
+            onClick={() => setEditing({})}
+            className="font-disp rounded-full bg-accent-500 px-5 py-2.5 font-bold text-white shadow-sm transition hover:bg-accent-600"
+          >
+            + Novo item
+          </button>
+        </div>
       </div>
 
       {error && <p className="py-16 text-center text-brand-400">Erro ao carregar despensa: {error}</p>}
@@ -236,7 +230,6 @@ export function PantryApp() {
         />
       )}
 
-      {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
       {showShoppingList && <ShoppingListPanel onClose={() => setShowShoppingList(false)} />}
       {showBalance && <BalancePanel onClose={() => setShowBalance(false)} />}
 

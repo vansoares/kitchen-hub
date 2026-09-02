@@ -71,14 +71,25 @@ export function MenusApp() {
             onClick={() => setViewingId(menu.id)}
             className="flex flex-col gap-2 rounded-3xl bg-white p-5 text-left shadow-sm transition hover:shadow-md dark:bg-brand-800"
           >
-            <h3 className="font-disp text-lg font-bold">{menu.name}</h3>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-disp text-lg font-bold">{menu.name}</h3>
+              <span className="font-disp shrink-0 rounded-full bg-accent-500/15 px-3 py-1 text-sm font-bold text-accent-600 dark:text-accent-400">
+                {menu.quantity} pronta{menu.quantity === 1 ? "" : "s"}
+              </span>
+            </div>
             <span className="text-xs font-semibold text-brand-900/50 dark:text-cream/50">
               {menu.recipes.length} {menu.recipes.length === 1 ? "receita" : "receitas"}
+              {menu.items.length > 0 && <> &middot; {menu.items.length} itens soltos</>}
             </span>
             <ul className="mt-1 flex flex-col gap-0.5 text-sm text-brand-700 dark:text-brand-200">
-              {menu.recipes.slice(0, 4).map((r) => (
+              {menu.recipes.slice(0, 3).map((r) => (
                 <li key={r.id}>
                   {r.recipeTitle} &times; {r.servings}
+                </li>
+              ))}
+              {menu.items.slice(0, 3).map((i) => (
+                <li key={i.id}>
+                  {i.quantity} {i.unit} {i.name}
                 </li>
               ))}
             </ul>
@@ -99,6 +110,7 @@ export function MenusApp() {
         <MenuDetailPanel
           menuId={viewingId}
           onClose={() => setViewingId(null)}
+          onStockChange={load}
           onEdit={() => {
             const menu = menus.find((m) => m.id === viewingId) ?? null;
             setViewingId(null);
