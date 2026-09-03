@@ -1,9 +1,10 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-// App de uso pessoal: qualquer conta Google poderia logar por padrao, entao
-// restringimos ao(s) email(s) em ALLOWED_EMAILS (lista separada por virgula).
-// Sem essa variavel configurada, o acesso fica aberto - defina em producao.
+// Por padrao qualquer conta Google pode logar - cada uma ganha sua propria
+// despensa (household) automaticamente e decide se quer compartilhar com
+// outra conta depois. ALLOWED_EMAILS e opcional: so existe pra quem quiser
+// voltar a restringir o login a uma lista fixa de emails (separada por virgula).
 function isAllowedEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   const allowList = (process.env.ALLOWED_EMAILS ?? "")

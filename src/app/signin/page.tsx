@@ -54,7 +54,9 @@ export default async function SignInPage({
 
         <GoogleSignInButton callbackUrl={params.callbackUrl ?? "/"} />
 
-        <p className="text-xs text-brand-900/40 dark:text-cream/40">🔒 Acesso restrito a quem foi convidado</p>
+        <p className="text-xs text-brand-900/40 dark:text-cream/40">
+          Cada login ganha sua propria despensa - compartilhe depois se quiser
+        </p>
       </div>
 
       <div className="absolute bottom-0 w-full">
