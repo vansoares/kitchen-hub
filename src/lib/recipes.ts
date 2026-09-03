@@ -17,10 +17,10 @@ export interface RecipeInput {
 
 const withIngredients = { ingredients: { orderBy: { id: "asc" as const } } };
 
-export function getRecipes(userEmail: string, search?: string) {
+export function getRecipes(householdId: number, search?: string) {
   return prisma.recipe.findMany({
     where: {
-      userEmail,
+      householdId,
       ...(search ? { title: { contains: search, mode: "insensitive" as const } } : {}),
     },
     include: withIngredients,
@@ -28,14 +28,14 @@ export function getRecipes(userEmail: string, search?: string) {
   });
 }
 
-export function getRecipe(userEmail: string, id: number) {
-  return prisma.recipe.findFirst({ where: { id, userEmail }, include: withIngredients });
+export function getRecipe(householdId: number, id: number) {
+  return prisma.recipe.findFirst({ where: { id, householdId }, include: withIngredients });
 }
 
-export function createRecipe(userEmail: string, data: RecipeInput) {
+export function createRecipe(householdId: number, data: RecipeInput) {
   return prisma.recipe.create({
     data: {
-      userEmail,
+      householdId,
       title: data.title,
       servings: data.servings,
       instructions: data.instructions,
@@ -45,11 +45,11 @@ export function createRecipe(userEmail: string, data: RecipeInput) {
   });
 }
 
-export function updateRecipe(userEmail: string, id: number, data: RecipeInput) {
+export function updateRecipe(householdId: number, id: number, data: RecipeInput) {
   // Ingredientes sao substituidos por completo - mais simples que fazer diff
   // linha a linha, e a lista costuma ser pequena (poucas dezenas no maximo).
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.recipe.findFirstOrThrow({ where: { id, userEmail } });
+    const existing = await tx.recipe.findFirstOrThrow({ where: { id, householdId } });
     await tx.recipeIngredient.deleteMany({ where: { recipeId: existing.id } });
     return tx.recipe.update({
       where: { id: existing.id },
@@ -64,8 +64,8 @@ export function updateRecipe(userEmail: string, id: number, data: RecipeInput) {
   });
 }
 
-export async function deleteRecipe(userEmail: string, id: number) {
-  const { count } = await prisma.recipe.deleteMany({ where: { id, userEmail } });
+export async function deleteRecipe(householdId: number, id: number) {
+  const { count } = await prisma.recipe.deleteMany({ where: { id, householdId } });
   if (count === 0) throw new Error("Receita nao encontrada");
 }
 

@@ -1,6 +1,7 @@
 import type { ItemDTO } from "@/types/item";
 import type { RecipeDTO } from "@/types/recipe";
 import type { PurchaseDTO, SpendingSummaryDTO } from "@/types/purchase";
+import type { HouseholdDTO } from "@/types/household";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -53,4 +54,12 @@ export const api = {
   createPurchase: (total: number, note?: string) =>
     request<PurchaseDTO>("/purchases", { method: "POST", body: JSON.stringify({ total, note }) }),
   deletePurchase: (id: number) => request<void>(`/purchases/${id}`, { method: "DELETE" }),
+
+  getHousehold: () => request<HouseholdDTO>("/household"),
+  renameHousehold: (name: string) =>
+    request<HouseholdDTO>("/household", { method: "PUT", body: JSON.stringify({ name }) }),
+  addHouseholdMember: (email: string) =>
+    request<HouseholdDTO>("/household/members", { method: "POST", body: JSON.stringify({ email }) }),
+  removeHouseholdMember: (email: string) =>
+    request<HouseholdDTO>(`/household/members/${encodeURIComponent(email)}`, { method: "DELETE" }),
 };

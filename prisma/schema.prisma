@@ -11,13 +11,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Uma "casa" - dono da despensa, receitas e compras. Cada email logado
+// pertence a exatamente um household (ver HouseholdMember); pessoas que
+// moram juntas entram no mesmo household pra compartilhar tudo.
+model Household {
+  id        Int      @id @default(autoincrement())
+  name      String   @default("Minha despensa")
+  createdAt DateTime @default(now())
+
+  members   HouseholdMember[]
+  items     Item[]
+  recipes   Recipe[]
+  purchases Purchase[]
+}
+
+// Liga um email (login) a um household. Unico por email: uma pessoa so
+// pode estar em uma casa por vez.
+model HouseholdMember {
+  id          Int       @id @default(autoincrement())
+  userEmail   String    @unique
+  householdId Int
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId])
+}
+
 model Item {
   id               Int      @id @default(autoincrement())
-  // dono do item - cada login (conta Google) so ve e mexe na propria despensa.
-  // default aponta pro email do dono original, so pra popular os dados ja
-  // existentes na primeira migracao; todo código novo sempre passa o valor
-  // explicitamente.
-  userEmail        String   @default("vanessa.ssoares.vs@gmail.com")
+  // dono do item - toda a casa (household) ve e mexe na mesma despensa.
+  householdId      Int
+  household        Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   name             String
   quantity         Float    @default(0)
   unit             String   @default("un")
@@ -32,7 +56,7 @@ model Item {
 
   logs ConsumptionLog[]
 
-  @@index([userEmail])
+  @@index([householdId])
   @@index([name])
   @@index([category])
   @@index([group])
@@ -56,7 +80,8 @@ model ConsumptionLog {
 
 model Recipe {
   id           Int      @id @default(autoincrement())
-  userEmail    String   @default("vanessa.ssoares.vs@gmail.com")
+  householdId  Int
+  household    Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   title        String
   servings     Int      @default(1)
   instructions String?
@@ -65,7 +90,7 @@ model Recipe {
 
   ingredients RecipeIngredient[]
 
-  @@index([userEmail])
+  @@index([householdId])
   @@index([title])
 }
 
@@ -85,12 +110,13 @@ model RecipeIngredient {
 // Valor gasto registrado ao final de uma ida ao mercado (lista de compras),
 // pra alimentar o balanco de gastos.
 model Purchase {
-  id        Int      @id @default(autoincrement())
-  userEmail String   @default("vanessa.ssoares.vs@gmail.com")
-  total     Float
-  note      String?
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  householdId Int
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  total       Float
+  note        String?
+  createdAt   DateTime @default(now())
 
-  @@index([userEmail])
+  @@index([householdId])
   @@index([createdAt])
 }

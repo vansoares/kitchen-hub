@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type AppSettings, type SortBy } from "@/lib/settings";
 import type { ItemGroup } from "@/types/item";
+import { HouseholdSection } from "@/components/HouseholdSection";
 
 const GROUP_OPTIONS: { value: ItemGroup; label: string }[] = [
   { value: "alimento", label: "🍽️ Alimentos" },
@@ -109,6 +110,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               onChange={(v) => update({ defaultOnlyAlerts: v })}
             />
           </section>
+
+          <HouseholdSection />
         </div>
       </div>
     </div>

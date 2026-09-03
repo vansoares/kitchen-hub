@@ -29,10 +29,10 @@ async function logChange(
   });
 }
 
-export function getItems(userEmail: string, search?: string, category?: string, group?: string) {
+export function getItems(householdId: number, search?: string, category?: string, group?: string) {
   return prisma.item.findMany({
     where: {
-      userEmail,
+      householdId,
       ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       ...(category ? { category } : {}),
       ...(group ? { group } : {}),
@@ -41,13 +41,13 @@ export function getItems(userEmail: string, search?: string, category?: string, 
   });
 }
 
-export function getItem(userEmail: string, id: number) {
-  return prisma.item.findFirst({ where: { id, userEmail } });
+export function getItem(householdId: number, id: number) {
+  return prisma.item.findFirst({ where: { id, householdId } });
 }
 
-export async function getCategories(userEmail: string, group?: string): Promise<string[]> {
+export async function getCategories(householdId: number, group?: string): Promise<string[]> {
   const rows = await prisma.item.findMany({
-    where: { userEmail, ...(group ? { group } : {}) },
+    where: { householdId, ...(group ? { group } : {}) },
     select: { category: true },
     distinct: ["category"],
     orderBy: { category: "asc" },
@@ -55,11 +55,11 @@ export async function getCategories(userEmail: string, group?: string): Promise<
   return rows.map((r) => r.category);
 }
 
-export function createItem(userEmail: string, data: ItemInput) {
+export function createItem(householdId: number, data: ItemInput) {
   return prisma.$transaction(async (tx) => {
     const item = await tx.item.create({
       data: {
-        userEmail,
+        householdId,
         name: data.name,
         quantity: data.quantity,
         unit: data.unit,
@@ -74,9 +74,9 @@ export function createItem(userEmail: string, data: ItemInput) {
   });
 }
 
-export async function updateItem(userEmail: string, id: number, data: Partial<ItemInput>) {
+export async function updateItem(householdId: number, id: number, data: Partial<ItemInput>) {
   return prisma.$transaction(async (tx) => {
-    const current = await tx.item.findFirstOrThrow({ where: { id, userEmail } });
+    const current = await tx.item.findFirstOrThrow({ where: { id, householdId } });
     const updated = await tx.item.update({
       where: { id: current.id },
       data: {
@@ -105,14 +105,14 @@ export async function updateItem(userEmail: string, id: number, data: Partial<It
   });
 }
 
-export async function deleteItem(userEmail: string, id: number) {
-  const { count } = await prisma.item.deleteMany({ where: { id, userEmail } });
+export async function deleteItem(householdId: number, id: number) {
+  const { count } = await prisma.item.deleteMany({ where: { id, householdId } });
   if (count === 0) throw new Error("Item nao encontrado");
 }
 
-export function purchaseItem(userEmail: string, id: number, amount: number) {
+export function purchaseItem(householdId: number, id: number, amount: number) {
   return prisma.$transaction(async (tx) => {
-    const current = await tx.item.findFirstOrThrow({ where: { id, userEmail } });
+    const current = await tx.item.findFirstOrThrow({ where: { id, householdId } });
     const updated = await tx.item.update({
       where: { id: current.id },
       data: { quantity: current.quantity + amount, lastPurchaseDate: new Date() },
@@ -122,9 +122,9 @@ export function purchaseItem(userEmail: string, id: number, amount: number) {
   });
 }
 
-export function consumeItem(userEmail: string, id: number, amount: number) {
+export function consumeItem(householdId: number, id: number, amount: number) {
   return prisma.$transaction(async (tx) => {
-    const current = await tx.item.findFirstOrThrow({ where: { id, userEmail } });
+    const current = await tx.item.findFirstOrThrow({ where: { id, householdId } });
     const actual = Math.min(amount, current.quantity);
     const updated = await tx.item.update({
       where: { id: current.id },
@@ -139,8 +139,8 @@ export function consumeItem(userEmail: string, id: number, amount: number) {
 // no filtro `where`, entao o status - que ja precisa ser calculado em JS mesmo -
 // e usado diretamente para filtrar. Despensas domesticas sao pequenas, entao
 // trazer tudo e filtrar em memoria e mais simples que SQL raw aqui.
-export async function getAlerts(userEmail: string, group?: string) {
-  const items = await prisma.item.findMany({ where: { userEmail, ...(group ? { group } : {}) } });
+export async function getAlerts(householdId: number, group?: string) {
+  const items = await prisma.item.findMany({ where: { householdId, ...(group ? { group } : {}) } });
   return items
     .filter((item) => computeStatus(item) !== "ok")
     .sort((a, b) => (a.quantity === b.quantity ? 0 : a.quantity - b.quantity));

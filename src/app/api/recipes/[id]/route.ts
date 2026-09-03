@@ -1,30 +1,30 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as recipes from "@/lib/recipes";
-import { getUserEmail } from "@/lib/session";
+import { getHouseholdId } from "@/lib/session";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const id = Number((await params).id);
   if (!Number.isInteger(id)) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const recipe = await recipes.getRecipe(userEmail, id);
+  const recipe = await recipes.getRecipe(householdId, id);
   if (!recipe) return NextResponse.json({ error: "Receita nao encontrada" }, { status: 404 });
   return NextResponse.json(recipes.toRecipeDTO(recipe));
 }
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const id = Number((await params).id);
   if (!Number.isInteger(id)) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const existing = await recipes.getRecipe(userEmail, id);
+  const existing = await recipes.getRecipe(householdId, id);
   if (!existing) return NextResponse.json({ error: "Receita nao encontrada" }, { status: 404 });
 
   const body = await req.json();
@@ -32,7 +32,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Titulo e obrigatorio" }, { status: 422 });
   }
 
-  const recipe = await recipes.updateRecipe(userEmail, id, {
+  const recipe = await recipes.updateRecipe(householdId, id, {
     title: body.title,
     servings: Number(body.servings ?? 1),
     instructions: body.instructions || null,
@@ -47,15 +47,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const id = Number((await params).id);
   if (!Number.isInteger(id)) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const existing = await recipes.getRecipe(userEmail, id);
+  const existing = await recipes.getRecipe(householdId, id);
   if (!existing) return NextResponse.json({ error: "Receita nao encontrada" }, { status: 404 });
 
-  await recipes.deleteRecipe(userEmail, id);
+  await recipes.deleteRecipe(householdId, id);
   return new NextResponse(null, { status: 204 });
 }

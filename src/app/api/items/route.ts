@@ -2,26 +2,26 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as pantry from "@/lib/pantry";
 import { toItemDTO } from "@/lib/status";
-import { getUserEmail } from "@/lib/session";
+import { getHouseholdId } from "@/lib/session";
 
 const VALID_GROUPS = ["alimento", "limpeza_higiene"];
 
 export async function GET(req: NextRequest) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
   const group = searchParams.get("group") ?? undefined;
 
-  const items = await pantry.getItems(userEmail, search, category, group);
+  const items = await pantry.getItems(householdId, search, category, group);
   return NextResponse.json(items.map(toItemDTO));
 }
 
 export async function POST(req: NextRequest) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const body = await req.json();
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "group invalido" }, { status: 422 });
   }
 
-  const item = await pantry.createItem(userEmail, {
+  const item = await pantry.createItem(householdId, {
     name: body.name,
     quantity: Number(body.quantity ?? 0),
     unit: body.unit ?? "un",

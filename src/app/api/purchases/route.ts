@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import * as purchases from "@/lib/purchases";
-import { getUserEmail } from "@/lib/session";
+import { getHouseholdId } from "@/lib/session";
 
 export async function GET() {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
-  const summary = await purchases.getSpendingSummary(userEmail);
+  const summary = await purchases.getSpendingSummary(householdId);
   return NextResponse.json(summary);
 }
 
 export async function POST(req: Request) {
-  const userEmail = await getUserEmail();
-  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  const householdId = await getHouseholdId();
+  if (householdId === null) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
 
   const body = await req.json();
   const total = Number(body?.total);
@@ -21,6 +21,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Informe um valor total valido" }, { status: 422 });
   }
 
-  const purchase = await purchases.createPurchase(userEmail, total, body?.note || null);
+  const purchase = await purchases.createPurchase(householdId, total, body?.note || null);
   return NextResponse.json(purchases.toPurchaseDTO(purchase), { status: 201 });
 }
