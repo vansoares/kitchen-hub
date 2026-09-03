@@ -2,20 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as pantry from "@/lib/pantry";
 import { toItemDTO } from "@/lib/status";
+import { getUserEmail } from "@/lib/session";
 
 const VALID_GROUPS = ["alimento", "limpeza_higiene"];
 
 export async function GET(req: NextRequest) {
+  const userEmail = await getUserEmail();
+  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") ?? undefined;
   const category = searchParams.get("category") ?? undefined;
   const group = searchParams.get("group") ?? undefined;
 
-  const items = await pantry.getItems(search, category, group);
+  const items = await pantry.getItems(userEmail, search, category, group);
   return NextResponse.json(items.map(toItemDTO));
 }
 
 export async function POST(req: NextRequest) {
+  const userEmail = await getUserEmail();
+  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+
   const body = await req.json();
 
   if (!body?.name || typeof body.name !== "string") {
@@ -25,7 +32,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "group invalido" }, { status: 422 });
   }
 
-  const item = await pantry.createItem({
+  const item = await pantry.createItem(userEmail, {
     name: body.name,
     quantity: Number(body.quantity ?? 0),
     unit: body.unit ?? "un",

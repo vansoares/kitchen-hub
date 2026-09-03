@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as pantry from "@/lib/pantry";
 import { toItemDTO } from "@/lib/status";
+import { getUserEmail } from "@/lib/session";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -11,23 +12,29 @@ function parseId(idParam: string): number | null {
 }
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
+  const userEmail = await getUserEmail();
+  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+
   const id = parseId((await params).id);
   if (id === null) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const item = await pantry.getItem(id);
+  const item = await pantry.getItem(userEmail, id);
   if (!item) return NextResponse.json({ error: "Item nao encontrado" }, { status: 404 });
   return NextResponse.json(toItemDTO(item));
 }
 
 export async function PUT(req: NextRequest, { params }: RouteParams) {
+  const userEmail = await getUserEmail();
+  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+
   const id = parseId((await params).id);
   if (id === null) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const existing = await pantry.getItem(id);
+  const existing = await pantry.getItem(userEmail, id);
   if (!existing) return NextResponse.json({ error: "Item nao encontrado" }, { status: 404 });
 
   const body = await req.json();
-  const item = await pantry.updateItem(id, {
+  const item = await pantry.updateItem(userEmail, id, {
     ...(body.name !== undefined ? { name: body.name } : {}),
     ...(body.quantity !== undefined ? { quantity: Number(body.quantity) } : {}),
     ...(body.unit !== undefined ? { unit: body.unit } : {}),
@@ -41,12 +48,15 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+  const userEmail = await getUserEmail();
+  if (!userEmail) return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+
   const id = parseId((await params).id);
   if (id === null) return NextResponse.json({ error: "Id invalido" }, { status: 422 });
 
-  const existing = await pantry.getItem(id);
+  const existing = await pantry.getItem(userEmail, id);
   if (!existing) return NextResponse.json({ error: "Item nao encontrado" }, { status: 404 });
 
-  await pantry.deleteItem(id);
+  await pantry.deleteItem(userEmail, id);
   return new NextResponse(null, { status: 204 });
 }

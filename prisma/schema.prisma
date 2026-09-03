@@ -13,6 +13,11 @@ datasource db {
 
 model Item {
   id               Int      @id @default(autoincrement())
+  // dono do item - cada login (conta Google) so ve e mexe na propria despensa.
+  // default aponta pro email do dono original, so pra popular os dados ja
+  // existentes na primeira migracao; todo código novo sempre passa o valor
+  // explicitamente.
+  userEmail        String   @default("vanessa.ssoares.vs@gmail.com")
   name             String
   quantity         Float    @default(0)
   unit             String   @default("un")
@@ -27,6 +32,7 @@ model Item {
 
   logs ConsumptionLog[]
 
+  @@index([userEmail])
   @@index([name])
   @@index([category])
   @@index([group])
@@ -50,6 +56,7 @@ model ConsumptionLog {
 
 model Recipe {
   id           Int      @id @default(autoincrement())
+  userEmail    String   @default("vanessa.ssoares.vs@gmail.com")
   title        String
   servings     Int      @default(1)
   instructions String?
@@ -58,6 +65,7 @@ model Recipe {
 
   ingredients RecipeIngredient[]
 
+  @@index([userEmail])
   @@index([title])
 }
 
@@ -78,9 +86,11 @@ model RecipeIngredient {
 // pra alimentar o balanco de gastos.
 model Purchase {
   id        Int      @id @default(autoincrement())
+  userEmail String   @default("vanessa.ssoares.vs@gmail.com")
   total     Float
   note      String?
   createdAt DateTime @default(now())
 
+  @@index([userEmail])
   @@index([createdAt])
 }

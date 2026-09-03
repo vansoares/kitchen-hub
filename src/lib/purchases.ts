@@ -3,16 +3,17 @@ import type { MonthlySpendingDTO, PurchaseDTO, SpendingSummaryDTO } from "@/type
 
 const MONTHS_IN_CHART = 6;
 
-export function createPurchase(total: number, note: string | null) {
-  return prisma.purchase.create({ data: { total, note } });
+export function createPurchase(userEmail: string, total: number, note: string | null) {
+  return prisma.purchase.create({ data: { userEmail, total, note } });
 }
 
-export function getPurchase(id: number) {
-  return prisma.purchase.findUnique({ where: { id } });
+export function getPurchase(userEmail: string, id: number) {
+  return prisma.purchase.findFirst({ where: { id, userEmail } });
 }
 
-export function deletePurchase(id: number) {
-  return prisma.purchase.delete({ where: { id } });
+export async function deletePurchase(userEmail: string, id: number) {
+  const { count } = await prisma.purchase.deleteMany({ where: { id, userEmail } });
+  if (count === 0) throw new Error("Compra nao encontrada");
 }
 
 export function toPurchaseDTO(p: { id: number; total: number; note: string | null; createdAt: Date }): PurchaseDTO {
@@ -31,14 +32,14 @@ function monthLabel(d: Date): string {
 // Soma o gasto de cada um dos ultimos N meses (incluindo os sem nenhuma
 // compra, que aparecem com total 0 - assim o grafico sempre tem os mesmos
 // N pontos, nunca "pula" um mes vazio.
-async function getMonthlySpending(months: number): Promise<MonthlySpendingDTO[]> {
+async function getMonthlySpending(userEmail: string, months: number): Promise<MonthlySpendingDTO[]> {
   const start = new Date();
   start.setDate(1);
   start.setHours(0, 0, 0, 0);
   start.setMonth(start.getMonth() - (months - 1));
 
   const purchases = await prisma.purchase.findMany({
-    where: { createdAt: { gte: start } },
+    where: { userEmail, createdAt: { gte: start } },
     select: { total: true, createdAt: true },
   });
 
@@ -64,20 +65,20 @@ async function getMonthlySpending(months: number): Promise<MonthlySpendingDTO[]>
   }));
 }
 
-export async function getSpendingSummary(recentLimit = 10): Promise<SpendingSummaryDTO> {
+export async function getSpendingSummary(userEmail: string, recentLimit = 10): Promise<SpendingSummaryDTO> {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
   const [allTimeAgg, monthAgg, recent, monthly] = await Promise.all([
-    prisma.purchase.aggregate({ _sum: { total: true } }),
+    prisma.purchase.aggregate({ _sum: { total: true }, where: { userEmail } }),
     prisma.purchase.aggregate({
       _sum: { total: true },
       _count: true,
-      where: { createdAt: { gte: startOfMonth } },
+      where: { userEmail, createdAt: { gte: startOfMonth } },
     }),
-    prisma.purchase.findMany({ orderBy: { createdAt: "desc" }, take: recentLimit }),
-    getMonthlySpending(MONTHS_IN_CHART),
+    prisma.purchase.findMany({ where: { userEmail }, orderBy: { createdAt: "desc" }, take: recentLimit }),
+    getMonthlySpending(userEmail, MONTHS_IN_CHART),
   ]);
 
   return {
