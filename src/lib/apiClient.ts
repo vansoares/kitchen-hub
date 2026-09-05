@@ -2,6 +2,8 @@ import type { ItemDTO } from "@/types/item";
 import type { RecipeDTO } from "@/types/recipe";
 import type { PurchaseDTO, SpendingSummaryDTO } from "@/types/purchase";
 import type { HouseholdDTO } from "@/types/household";
+import type { MeDTO, AdminUserDTO } from "@/types/feature";
+import type { ShoppingListDTO, ShoppingListSummaryDTO } from "@/types/shoppingList";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -62,4 +64,29 @@ export const api = {
     request<HouseholdDTO>("/household/members", { method: "POST", body: JSON.stringify({ email }) }),
   removeHouseholdMember: (email: string) =>
     request<HouseholdDTO>(`/household/members/${encodeURIComponent(email)}`, { method: "DELETE" }),
+
+  getMe: () => request<MeDTO>("/me"),
+  getAdminUsers: () => request<AdminUserDTO[]>("/admin/users"),
+  setUserFeature: (email: string, feature: string, enabled: boolean) =>
+    request<{ email: string; features: string[] }>(
+      `/admin/users/${encodeURIComponent(email)}/features`,
+      { method: "PUT", body: JSON.stringify({ feature, enabled }) }
+    ),
+
+  listShoppingLists: () => request<ShoppingListSummaryDTO[]>("/shopping-lists"),
+  getShoppingList: (id: number) => request<ShoppingListDTO>(`/shopping-lists/${id}`),
+  createShoppingList: (name: string) =>
+    request<ShoppingListDTO>("/shopping-lists", { method: "POST", body: JSON.stringify({ name }) }),
+  renameShoppingList: (id: number, name: string) =>
+    request<ShoppingListSummaryDTO>(`/shopping-lists/${id}`, { method: "PUT", body: JSON.stringify({ name }) }),
+  deleteShoppingList: (id: number) => request<void>(`/shopping-lists/${id}`, { method: "DELETE" }),
+  addShoppingListItem: (listId: number, data: { name?: string; quantity?: number; unit?: string; itemId?: number }) =>
+    request<ShoppingListDTO>(`/shopping-lists/${listId}/items`, { method: "POST", body: JSON.stringify(data) }),
+  toggleShoppingListItem: (listId: number, itemId: number, checked: boolean) =>
+    request<ShoppingListDTO>(`/shopping-lists/${listId}/items/${itemId}`, {
+      method: "PUT",
+      body: JSON.stringify({ checked }),
+    }),
+  removeShoppingListItem: (listId: number, itemId: number) =>
+    request<ShoppingListDTO>(`/shopping-lists/${listId}/items/${itemId}`, { method: "DELETE" }),
 };

@@ -5,6 +5,7 @@ import { ItemCard } from "@/components/ItemCard";
 import { ItemForm } from "@/components/ItemForm";
 import { ShoppingListPanel } from "@/components/ShoppingListPanel";
 import { BalancePanel } from "@/components/BalancePanel";
+import { CustomShoppingLists } from "@/components/CustomShoppingLists";
 import { ActionMenu } from "@/components/ActionMenu";
 import { api } from "@/lib/apiClient";
 import { DEFAULT_SETTINGS, loadSettings, SETTINGS_EVENT, type AppSettings, type SortBy } from "@/lib/settings";
@@ -58,6 +59,8 @@ export function PantryApp({ userName }: { userName?: string | null }) {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showBalance, setShowBalance] = useState(false);
+  const [showCustomLists, setShowCustomLists] = useState(false);
+  const [features, setFeatures] = useState<string[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   // Aplica a aba/ordenacao/filtro padrao salvos so uma vez, logo apos a
@@ -89,6 +92,17 @@ export function PantryApp({ userName }: { userName?: string | null }) {
     const open = params.get("open");
     if (open === "lista") setShowShoppingList(true);
     if (open === "novo") setEditing({});
+  }, []);
+
+  // Listas de compras personalizadas so aparecem pra quem tem a feature
+  // liberada pelo admin (ver /admin).
+  useEffect(() => {
+    api
+      .getMe()
+      .then((me) => setFeatures(me.features))
+      .catch(() => {
+        /* recurso opcional - se falhar, o item de menu so nao aparece */
+      });
   }, []);
 
   const sortedItems = useMemo(() => sortItems(items, sortBy), [items, sortBy]);
@@ -281,6 +295,9 @@ export function PantryApp({ userName }: { userName?: string | null }) {
           <ActionMenu
             items={[
               { label: "🛒 Lista de compras", onClick: () => setShowShoppingList(true) },
+              ...(features.includes("custom_shopping_lists")
+                ? [{ label: "📝 Minhas listas", onClick: () => setShowCustomLists(true) }]
+                : []),
               { label: "💰 Balanco", onClick: () => setShowBalance(true) },
             ]}
           />
@@ -340,6 +357,7 @@ export function PantryApp({ userName }: { userName?: string | null }) {
           }}
         />
       )}
+      {showCustomLists && <CustomShoppingLists onClose={() => setShowCustomLists(false)} />}
 
       {notice && (
         <div

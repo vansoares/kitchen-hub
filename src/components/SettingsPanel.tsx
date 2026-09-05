@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, type AppSettings, type SortBy } from "@/lib/settings";
 import type { ItemGroup } from "@/types/item";
 import { HouseholdSection } from "@/components/HouseholdSection";
+import { api } from "@/lib/apiClient";
 
 const GROUP_OPTIONS: { value: ItemGroup; label: string }[] = [
   { value: "alimento", label: "🍽️ Alimentos" },
@@ -17,9 +18,16 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [features, setFeatures] = useState<string[]>([]);
 
   useEffect(() => {
     setSettings(loadSettings());
+    api
+      .getMe()
+      .then((me) => setFeatures(me.features))
+      .catch(() => {
+        /* recurso opcional - se falhar, a secao de despensa compartilhada so nao aparece */
+      });
   }, []);
 
   function update(patch: Partial<AppSettings>) {
@@ -111,7 +119,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             />
           </section>
 
-          <HouseholdSection />
+          {features.includes("household_sharing") && <HouseholdSection />}
         </div>
       </div>
     </div>

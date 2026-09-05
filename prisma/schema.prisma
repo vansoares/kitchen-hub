@@ -19,10 +19,11 @@ model Household {
   name      String   @default("Minha despensa")
   createdAt DateTime @default(now())
 
-  members   HouseholdMember[]
-  items     Item[]
-  recipes   Recipe[]
-  purchases Purchase[]
+  members       HouseholdMember[]
+  items         Item[]
+  recipes       Recipe[]
+  purchases     Purchase[]
+  shoppingLists ShoppingList[]
 }
 
 // Liga um email (login) a um household. Unico por email: uma pessoa so
@@ -54,7 +55,8 @@ model Item {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  logs ConsumptionLog[]
+  logs             ConsumptionLog[]
+  shoppingListRefs ShoppingListItem[]
 
   @@index([householdId])
   @@index([name])
@@ -119,4 +121,61 @@ model Purchase {
 
   @@index([householdId])
   @@index([createdAt])
+}
+
+// Todo email que ja logou no app pelo menos uma vez - alimenta a tela de
+// admin ("todas as pessoas com conta criada"). Atualizado a cada login.
+model AppUser {
+  email       String   @id
+  name        String?
+  image       String?
+  createdAt   DateTime @default(now())
+  lastLoginAt DateTime @default(now())
+}
+
+// Libera uma funcionalidade (ver src/lib/features.ts) pra um email
+// especifico. A existencia da linha = liberado; sem linha = bloqueado.
+// So o admin (ver src/lib/admin.ts) mexe aqui.
+model FeatureGrant {
+  id        Int      @id @default(autoincrement())
+  userEmail String
+  feature   String
+  createdAt DateTime @default(now())
+
+  @@unique([userEmail, feature])
+  @@index([userEmail])
+}
+
+// Lista de compras "do zero" - separada do checklist automatico (que usa
+// os itens abaixo do minimo). Presa ao household, entao todo mundo que
+// compartilha a despensa compartilha a mesma lista.
+model ShoppingList {
+  id          Int      @id @default(autoincrement())
+  householdId Int
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  name        String
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items ShoppingListItem[]
+
+  @@index([householdId])
+}
+
+model ShoppingListItem {
+  id        Int      @id @default(autoincrement())
+  listId    Int
+  list      ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  // opcional: quando a pessoa escolhe um item ja cadastrado na despensa em
+  // vez de digitar um nome livre. Sobrevive a exclusao do item (SetNull).
+  itemId    Int?
+  item      Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  name      String
+  quantity  Float    @default(1)
+  unit      String   @default("un")
+  checked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([listId])
 }
