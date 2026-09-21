@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/apiClient";
-import { FEATURES } from "@/lib/features";
+import { FEATURES, isGenerallyAvailable } from "@/lib/features";
 import type { AdminUserDTO } from "@/types/feature";
 
 function formatDate(iso: string) {
@@ -84,6 +84,18 @@ export function AdminUsersPanel() {
               {FEATURES.map((feature) => {
                 const enabled = user.features.includes(feature.key);
                 const key = `${user.email}:${feature.key}`;
+                if (isGenerallyAvailable(feature.key)) {
+                  return (
+                    <span
+                      key={feature.key}
+                      title={feature.description}
+                      className="flex items-center gap-2 rounded-xl bg-brand-500/20 px-3 py-2 text-sm font-medium text-brand-700 dark:bg-white/10 dark:text-brand-200"
+                    >
+                      {feature.label}
+                      <span className="text-xs opacity-70">liberado pra todos</span>
+                    </span>
+                  );
+                }
                 return (
                   <label
                     key={feature.key}

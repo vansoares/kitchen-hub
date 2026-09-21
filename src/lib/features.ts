@@ -16,6 +16,15 @@ export const FEATURES = [
 
 export type FeatureKey = (typeof FEATURES)[number]["key"];
 
+// Features liberadas pra todo mundo: valem sem grant no banco e o admin nao
+// precisa conceder uma a uma. Feature nova entra fora daqui e so e liberada
+// caso a caso ate entrar na lista.
+export const GA_FEATURES: readonly FeatureKey[] = ["household_sharing", "custom_shopping_lists"];
+
+export function isGenerallyAvailable(key: FeatureKey): boolean {
+  return GA_FEATURES.includes(key);
+}
+
 export function isFeatureKey(value: string): value is FeatureKey {
   return FEATURES.some((f) => f.key === value);
 }
