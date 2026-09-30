@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { computeStatus } from "@/lib/status";
+import { computeStatus, isAlertStatus } from "@/lib/status";
 import type { Prisma } from "@prisma/client";
 
 export interface ItemInput {
@@ -11,6 +11,7 @@ export interface ItemInput {
   minQuantity: number;
   inUse: boolean;
   lastPurchaseDate: string | null;
+  expiryDate?: string | null;
 }
 
 function toDate(iso: string | null | undefined): Date | null {
@@ -69,6 +70,7 @@ export function createItem(householdId: number, data: ItemInput) {
         minQuantity: data.minQuantity,
         inUse: data.inUse,
         lastPurchaseDate: toDate(data.lastPurchaseDate),
+        expiryDate: toDate(data.expiryDate),
       },
     });
     await logChange(tx, item.id, item.name, item.quantity, item.quantity, "criacao");
@@ -92,6 +94,7 @@ export async function updateItem(householdId: number, id: number, data: Partial<
         ...(data.lastPurchaseDate !== undefined
           ? { lastPurchaseDate: toDate(data.lastPurchaseDate) }
           : {}),
+        ...(data.expiryDate !== undefined ? { expiryDate: toDate(data.expiryDate) } : {}),
       },
     });
     if (data.quantity !== undefined && data.quantity !== current.quantity) {
@@ -145,6 +148,6 @@ export function consumeItem(householdId: number, id: number, amount: number) {
 export async function getAlerts(householdId: number, group?: string) {
   const items = await prisma.item.findMany({ where: { householdId, ...(group ? { group } : {}) } });
   return items
-    .filter((item) => computeStatus(item) !== "ok")
+    .filter((item) => isAlertStatus(computeStatus(item)))
     .sort((a, b) => (a.quantity === b.quantity ? 0 : a.quantity - b.quantity));
 }

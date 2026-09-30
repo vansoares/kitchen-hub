@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/apiClient";
 import { Badge } from "@/components/Badge";
+import { MarketMode } from "@/components/MarketMode";
 import type { ItemDTO, ItemGroup } from "@/types/item";
 
 // So local: e um checklist de uso durante a ida ao mercado, nao precisa
@@ -66,6 +67,7 @@ function saveSettings(settings: ShoppingListSettings) {
 
 function matchesSettings(item: ItemDTO, settings: ShoppingListSettings): boolean {
   if (!settings.groups.includes(item.group)) return false;
+  if (item.status === "em_uso") return false;
   if (item.status === "acabou") return true;
   const threshold = settings.maxQuantity ?? item.minQuantity;
   return item.quantity <= threshold;
@@ -78,6 +80,7 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [settings, setSettings] = useState<ShoppingListSettings>(DEFAULT_SETTINGS);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMarket, setShowMarket] = useState(false);
   const [totalSpent, setTotalSpent] = useState("");
   const [savingPurchase, setSavingPurchase] = useState(false);
   const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null);
@@ -167,6 +170,13 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <div className="flex shrink-0 gap-2">
+            <button
+              onClick={() => setShowMarket(true)}
+              disabled={items.length === 0}
+              className="rounded-lg bg-accent-500 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-40"
+            >
+              🛍️ Mercado
+            </button>
             {checked.size > 0 && (
               <button
                 onClick={clearChecks}
@@ -312,6 +322,30 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         </div>
+
+        {showMarket && (
+          <MarketMode
+            title="Lista de compras"
+            rows={items.map((i) => ({
+              key: String(i.id),
+              name: i.name,
+              detail: `${i.quantity} ${i.unit} em casa · mínimo ${i.minQuantity}`,
+              checked: checked.has(i.id),
+            }))}
+            pricesStorageKey="kitchenhub:market-prices:auto"
+            restockLabel="Dar entrada de +1 unidade no estoque dos itens marcados"
+            onToggle={(key) => toggle(Number(key))}
+            onFinish={async ({ total, checkedKeys, restock }) => {
+              if (total > 0) await api.createPurchase(total);
+              if (restock) {
+                for (const key of checkedKeys) await api.purchaseItem(Number(key), 1);
+              }
+              clearChecks();
+              setAllItems(await api.listItems({}));
+            }}
+            onClose={() => setShowMarket(false)}
+          />
+        )}
 
         <div className="border-t border-brand-500/10 px-4 py-4 dark:border-white/10 sm:px-6">
           <p className="mb-2 text-sm font-semibold text-brand-700 dark:text-brand-200">

@@ -13,7 +13,14 @@ import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
 type Notice = { type: "success" | "error"; text: string } | null;
 
-const STATUS_PRIORITY: Record<ItemStatus, number> = { acabou: 0, acabando: 1, em_uso: 2, ok: 3 };
+const STATUS_PRIORITY: Record<ItemStatus, number> = {
+  vencido: 0,
+  acabou: 1,
+  vencendo: 2,
+  acabando: 3,
+  em_uso: 4,
+  ok: 5,
+};
 
 const GROUP_TABS: { value: ItemGroup; label: string }[] = [
   { value: "alimento", label: "🍽️ Alimentos" },

@@ -1,4 +1,4 @@
-export type ItemStatus = "ok" | "acabando" | "acabou" | "em_uso";
+export type ItemStatus = "ok" | "acabando" | "acabou" | "em_uso" | "vencendo" | "vencido";
 export type ItemGroup = "alimento" | "limpeza_higiene";
 
 export interface ItemDTO {
@@ -11,6 +11,9 @@ export interface ItemDTO {
   minQuantity: number;
   inUse: boolean;
   lastPurchaseDate: string | null;
+  expiryDate: string | null;
+  // dias ate vencer (negativo = ja venceu); null se sem validade
+  daysToExpiry: number | null;
   createdAt: string;
   updatedAt: string;
   status: ItemStatus;

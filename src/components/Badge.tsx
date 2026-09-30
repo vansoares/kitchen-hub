@@ -5,6 +5,8 @@ const STYLES: Record<ItemStatus, string> = {
   acabando: "bg-amber-500 text-white",
   acabou: "bg-red-500 text-white",
   em_uso: "bg-sky-500 text-white",
+  vencendo: "bg-orange-500 text-white",
+  vencido: "bg-rose-700 text-white",
 };
 
 const LABELS: Record<ItemStatus, string> = {
@@ -12,6 +14,8 @@ const LABELS: Record<ItemStatus, string> = {
   acabando: "Acabando",
   acabou: "Acabou",
   em_uso: "Em uso",
+  vencendo: "Vencendo",
+  vencido: "Vencido",
 };
 
 export function Badge({ status }: { status: ItemStatus }) {

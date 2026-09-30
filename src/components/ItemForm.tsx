@@ -23,6 +23,7 @@ interface FormState {
   category: string;
   minQuantity: number | string;
   inUse: boolean;
+  expiryDate: string;
 }
 
 function emptyForm(defaultGroup: ItemGroup): FormState {
@@ -34,6 +35,7 @@ function emptyForm(defaultGroup: ItemGroup): FormState {
     category: "Outros",
     minQuantity: 1,
     inUse: false,
+    expiryDate: "",
   };
 }
 
@@ -57,6 +59,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
           category: initial.category ?? "Outros",
           minQuantity: initial.minQuantity ?? 1,
           inUse: initial.inUse ?? false,
+          expiryDate: initial.expiryDate ?? "",
         }
       : {}),
   }));
@@ -90,6 +93,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
       ...form,
       quantity: Number(form.quantity),
       minQuantity: Number(form.minQuantity),
+      expiryDate: form.expiryDate || null,
     });
   }
 
@@ -173,6 +177,15 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
                 </datalist>
               </Field>
             </div>
+
+            <Field label="Validade (opcional)">
+              <input
+                type="date"
+                value={form.expiryDate}
+                onChange={(e) => setField("expiryDate", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
 
             <label className="flex items-center gap-2 text-sm font-semibold text-brand-500 dark:text-brand-300">
               <input

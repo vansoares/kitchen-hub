@@ -55,6 +55,8 @@ model Item {
   // foi aberta). Permite controlar itens raros sem manter estoque deles.
   inUse            Boolean  @default(false)
   lastPurchaseDate DateTime? @db.Date
+  // validade da unidade atual (ou da mais proxima de vencer). Opcional.
+  expiryDate       DateTime? @db.Date
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

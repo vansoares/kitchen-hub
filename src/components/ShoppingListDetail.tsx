@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/apiClient";
+import { MarketMode } from "@/components/MarketMode";
 import type { ShoppingListDTO } from "@/types/shoppingList";
 import type { ItemDTO } from "@/types/item";
 
@@ -20,6 +21,7 @@ export function ShoppingListDetail({
   const [freeText, setFreeText] = useState("");
   const [pickedItemId, setPickedItemId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showMarket, setShowMarket] = useState(false);
 
   function load() {
     api
@@ -109,10 +111,42 @@ export function ShoppingListDetail({
           ← Voltar
         </button>
         <h3 className="min-w-0 flex-1 truncate font-bold text-brand-800 dark:text-cream">{list.name}</h3>
+        <button
+          onClick={() => setShowMarket(true)}
+          disabled={list.items.length === 0}
+          className="shrink-0 rounded-lg bg-accent-500 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-40"
+        >
+          🛍️ Mercado
+        </button>
         <button onClick={deleteList} className="shrink-0 text-xs font-bold text-red-500">
           apagar lista
         </button>
       </div>
+
+      {showMarket && (
+        <MarketMode
+          title={list.name}
+          rows={list.items.map((i) => ({
+            key: String(i.id),
+            name: i.name,
+            detail: `${i.quantity} ${i.unit}`,
+            checked: i.checked,
+          }))}
+          pricesStorageKey={`kitchenhub:market-prices:list-${listId}`}
+          restockLabel="Dar entrada no estoque dos itens da despensa marcados"
+          onToggle={(key, checked) => toggleItem(Number(key), checked)}
+          onFinish={async ({ total, checkedKeys, restock }) => {
+            if (total > 0) await api.createPurchase(total, list.name);
+            if (restock) {
+              for (const key of checkedKeys) {
+                const row = list.items.find((i) => i.id === Number(key));
+                if (row?.itemId) await api.purchaseItem(row.itemId, row.quantity);
+              }
+            }
+          }}
+          onClose={() => setShowMarket(false)}
+        />
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {error && <p className="mb-3 text-sm font-medium text-red-500">{error}</p>}

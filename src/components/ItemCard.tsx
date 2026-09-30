@@ -6,12 +6,22 @@ const BG_BY_STATUS: Record<string, string> = {
   acabando: "bg-amber-50 dark:bg-amber-950/40",
   acabou: "bg-red-50 dark:bg-red-950/40",
   em_uso: "bg-sky-50 dark:bg-sky-950/40",
+  vencendo: "bg-orange-50 dark:bg-orange-950/40",
+  vencido: "bg-rose-100 dark:bg-rose-950/50",
 };
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+function expiryLabel(days: number | null) {
+  if (days === null) return "Validade";
+  if (days < 0) return `Venceu ha ${-days} dia${days === -1 ? "" : "s"}`;
+  if (days === 0) return "Vence hoje";
+  if (days === 1) return "Vence amanha";
+  return `Vence em ${days} dias`;
 }
 
 interface Props {
@@ -48,6 +58,20 @@ export function ItemCard({ item, onConsume, onPurchase, onToggleInUse, onEdit, c
         minimo {item.minQuantity}
         {item.lastPurchaseDate && <> &middot; compra {formatDate(item.lastPurchaseDate)}</>}
       </div>
+
+      {item.expiryDate && item.quantity > 0 && (
+        <div
+          className={`font-semibold ${compact ? "text-[11px]" : "text-xs"} ${
+            item.status === "vencido"
+              ? "text-rose-700 dark:text-rose-300"
+              : item.status === "vencendo"
+                ? "text-orange-600 dark:text-orange-300"
+                : "text-brand-900/50 dark:text-cream/50"
+          }`}
+        >
+          {expiryLabel(item.daysToExpiry)} &middot; {formatDate(item.expiryDate)}
+        </div>
+      )}
 
       <div className={`flex items-center gap-1.5 ${compact ? "mt-0.5" : "mt-1 gap-3"}`}>
         <button

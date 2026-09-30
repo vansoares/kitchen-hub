@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     minQuantity: Number(body.minQuantity ?? 1),
     inUse: Boolean(body.inUse ?? false),
     lastPurchaseDate: body.lastPurchaseDate ?? null,
+    expiryDate: body.expiryDate || null,
   });
 
   return NextResponse.json(toItemDTO(item), { status: 201 });
