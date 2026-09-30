@@ -112,7 +112,7 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-cream dark:bg-brand-900">
-      <div className="border-b border-brand-500/10 px-4 pb-3 pt-4 dark:border-white/10">
+      <div className="border-b border-brand-500/10 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <h2 className="font-disp truncate text-xl font-bold text-brand-700 dark:text-brand-100">
@@ -184,7 +184,7 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
         ))}
       </ul>
 
-      <div className="flex flex-col gap-2 border-t border-brand-500/10 bg-white px-4 py-3 dark:border-white/10 dark:bg-brand-800">
+      <div className="flex flex-col gap-2 border-t border-brand-500/10 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-white/10 dark:bg-brand-800">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm font-semibold text-brand-400 dark:text-brand-300">Total do carrinho</span>
           <label className="flex items-center gap-1">
