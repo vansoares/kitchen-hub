@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/apiClient";
 import { Badge } from "@/components/Badge";
 import { MarketMode } from "@/components/MarketMode";
+import { useLivePolling } from "@/lib/useLivePolling";
 import type { ItemDTO, ItemGroup } from "@/types/item";
 
-// So local: e um checklist de uso durante a ida ao mercado, nao precisa
-// sincronizar entre dispositivos nem sobreviver a limpeza de dados do navegador.
-const CHECKED_KEY = "kitchenhub:shopping-checked";
+// As marcacoes do carrinho ficam no servidor (todo mundo da casa ve o mesmo);
+// so as preferencias de filtro da lista continuam locais, por dispositivo.
 const SETTINGS_KEY = "kitchenhub:shopping-settings";
 
 const GROUP_LABELS: Record<ItemGroup, string> = {
@@ -25,23 +25,6 @@ interface ShoppingListSettings {
 }
 
 const DEFAULT_SETTINGS: ShoppingListSettings = { groups: [...GROUP_ORDER], maxQuantity: null };
-
-function loadChecked(): Set<number> {
-  try {
-    const raw = localStorage.getItem(CHECKED_KEY);
-    return new Set<number>(raw ? JSON.parse(raw) : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveChecked(checked: Set<number>) {
-  try {
-    localStorage.setItem(CHECKED_KEY, JSON.stringify([...checked]));
-  } catch {
-    /* localStorage indisponivel (modo privado etc.) - checklist so nao persiste */
-  }
-}
 
 function loadSettings(): ShoppingListSettings {
   try {
@@ -85,31 +68,66 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
   const [savingPurchase, setSavingPurchase] = useState(false);
   const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null);
 
+  // Mudancas locais ainda em voo: enquanto houver, uma atualizacao "ao vivo"
+  // nao pode sobrescrever o estado otimista (senao o check piscaria de volta).
+  const pendingRef = useRef(0);
+
+  const refresh = useCallback(async () => {
+    const [list, ids] = await Promise.all([api.listItems({}), api.getShoppingChecks()]);
+    if (pendingRef.current > 0) return;
+    setAllItems(list);
+    setChecked(new Set(ids));
+  }, []);
+
   useEffect(() => {
-    setChecked(loadChecked());
     setSettings(loadSettings());
-    api
-      .listItems({})
-      .then(setAllItems)
+    refresh()
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar lista"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refresh]);
+
+  // Outra pessoa da casa marcando itens no mercado aparece aqui em poucos segundos.
+  useLivePolling(() => {
+    refresh().catch(() => {
+      /* falha de rede momentanea - tenta de novo no proximo ciclo */
+    });
+  });
 
   const items = useMemo(() => allItems.filter((item) => matchesSettings(item, settings)), [allItems, settings]);
 
-  function toggle(id: number) {
+  function applyCheck(id: number, value: boolean) {
     setChecked((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      saveChecked(next);
+      if (value) next.add(id);
+      else next.delete(id);
       return next;
     });
   }
 
-  function clearChecks() {
+  async function toggle(id: number) {
+    const value = !checked.has(id);
+    applyCheck(id, value);
+    pendingRef.current++;
+    try {
+      await api.setShoppingCheck(id, value);
+    } catch {
+      applyCheck(id, !value); // nao salvou: volta ao que o servidor tem
+    } finally {
+      pendingRef.current--;
+    }
+  }
+
+  async function clearChecks() {
+    const before = checked;
     setChecked(new Set());
-    saveChecked(new Set());
+    pendingRef.current++;
+    try {
+      await api.clearShoppingChecks();
+    } catch {
+      setChecked(before);
+    } finally {
+      pendingRef.current--;
+    }
   }
 
   function updateSettings(patch: Partial<ShoppingListSettings>) {
@@ -340,8 +358,8 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
               if (restock) {
                 for (const key of checkedKeys) await api.purchaseItem(Number(key), 1);
               }
-              clearChecks();
-              setAllItems(await api.listItems({}));
+              await clearChecks();
+              await refresh();
             }}
             onClose={() => setShowMarket(false)}
           />

@@ -24,6 +24,7 @@ model Household {
   recipes       Recipe[]
   purchases     Purchase[]
   shoppingLists ShoppingList[]
+  shoppingChecks ShoppingCheck[]
 }
 
 // Liga um email (login) a um household. Unico por email: uma pessoa so
@@ -62,6 +63,7 @@ model Item {
 
   logs             ConsumptionLog[]
   shoppingListRefs ShoppingListItem[]
+  shoppingChecks   ShoppingCheck[]
 
   @@index([householdId])
   @@index([name])
@@ -183,4 +185,17 @@ model ShoppingListItem {
   createdAt DateTime @default(now())
 
   @@index([listId])
+}
+
+// Item da lista de compras automatica que ja foi pro carrinho. Preso a casa
+// (nao ao login) pra todos que dividem a despensa verem o mesmo carrinho.
+model ShoppingCheck {
+  id          Int       @id @default(autoincrement())
+  householdId Int
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  itemId      Int
+  item        Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([householdId, itemId])
 }

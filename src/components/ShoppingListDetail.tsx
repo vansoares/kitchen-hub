@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/apiClient";
 import { MarketMode } from "@/components/MarketMode";
+import { useLivePolling } from "@/lib/useLivePolling";
 import type { ShoppingListDTO } from "@/types/shoppingList";
 import type { ItemDTO } from "@/types/item";
 
@@ -31,6 +32,23 @@ export function ShoppingListDetail({
   }
 
   useEffect(load, [listId]);
+
+  // Alteracoes nossas ainda em voo: uma atualizacao "ao vivo" nao pode
+  // sobrescrever o que acabamos de fazer com uma resposta mais antiga.
+  const inflight = useRef(0);
+
+  // Outra pessoa da casa marcando/adicionando itens aparece aqui em poucos segundos.
+  useLivePolling(() => {
+    if (inflight.current > 0) return;
+    api
+      .getShoppingList(listId)
+      .then((fresh) => {
+        if (inflight.current === 0) setList(fresh);
+      })
+      .catch(() => {
+        /* falha de rede momentanea - tenta de novo no proximo ciclo */
+      });
+  });
   useEffect(() => {
     api.listItems({}).then(setPantryItems).catch(() => {});
   }, []);
@@ -67,10 +85,13 @@ export function ShoppingListDetail({
   }
 
   async function toggleItem(itemId: number, checked: boolean) {
+    inflight.current++;
     try {
       setList(await api.toggleShoppingListItem(listId, itemId, checked));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao atualizar item");
+    } finally {
+      inflight.current--;
     }
   }
 

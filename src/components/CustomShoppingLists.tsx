@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/apiClient";
 import type { ShoppingListSummaryDTO } from "@/types/shoppingList";
 import { ShoppingListDetail } from "@/components/ShoppingListDetail";
+import { useLivePolling } from "@/lib/useLivePolling";
 
 export function CustomShoppingLists({ onClose }: { onClose: () => void }) {
   const [lists, setLists] = useState<ShoppingListSummaryDTO[] | null>(null);
@@ -20,6 +21,9 @@ export function CustomShoppingLists({ onClose }: { onClose: () => void }) {
   }
 
   useEffect(load, []);
+  useLivePolling(() => {
+    if (selectedId === null) load();
+  });
 
   async function createList(e: React.FormEvent) {
     e.preventDefault();

@@ -65,6 +65,11 @@ export const api = {
   removeHouseholdMember: (email: string) =>
     request<HouseholdDTO>(`/household/members/${encodeURIComponent(email)}`, { method: "DELETE" }),
 
+  getShoppingChecks: () => request<number[]>("/shopping-checks"),
+  setShoppingCheck: (itemId: number, checked: boolean) =>
+    request<void>("/shopping-checks", { method: "PUT", body: JSON.stringify({ itemId, checked }) }),
+  clearShoppingChecks: () => request<void>("/shopping-checks", { method: "DELETE" }),
+
   getMe: () => request<MeDTO>("/me"),
   getAdminUsers: () => request<AdminUserDTO[]>("/admin/users"),
   setUserFeature: (email: string, feature: string, enabled: boolean) =>
