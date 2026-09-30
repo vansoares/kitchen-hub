@@ -106,9 +106,19 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
         className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 shadow-xl dark:bg-brand-800"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="font-disp mb-4 text-xl font-bold text-brand-700 dark:text-brand-100">
-          {isEditing ? "Editar item" : "Novo item"}
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-disp text-xl font-bold text-brand-700 dark:text-brand-100">
+            {isEditing ? "Editar item" : "Novo item"}
+          </h2>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Fechar"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500/10 text-sm font-semibold text-brand-700 dark:text-brand-200"
+          >
+            ✕
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Field label="Tipo">
@@ -197,21 +207,16 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
               Tem uma unidade em uso
             </label>
 
-            <div className="mt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="flex-1 rounded-xl bg-brand-500/10 py-2.5 font-semibold text-brand-700 dark:text-brand-200"
-              >
-                Cancelar
-              </button>
+            <div className="mt-2 flex items-center gap-2">
               {isEditing && initial && (
                 <button
                   type="button"
                   onClick={() => onDelete(initial as ItemDTO)}
-                  className="flex-1 rounded-xl bg-red-500 py-2.5 font-semibold text-white"
+                  aria-label="Excluir item"
+                  title="Excluir item"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-lg text-red-500 transition hover:bg-red-200 dark:bg-red-500/20 dark:text-red-300"
                 >
-                  Excluir
+                  🗑
                 </button>
               )}
               <button type="submit" className="font-disp flex-1 rounded-full bg-accent-500 py-2.5 font-bold text-white">
