@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     group: body.group ?? "alimento",
     category: body.category ?? "Outros",
     minQuantity: Number(body.minQuantity ?? 1),
+    inUse: Boolean(body.inUse ?? false),
     lastPurchaseDate: body.lastPurchaseDate ?? null,
   });
 

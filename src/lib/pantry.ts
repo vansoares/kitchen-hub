@@ -9,6 +9,7 @@ export interface ItemInput {
   group: string;
   category: string;
   minQuantity: number;
+  inUse: boolean;
   lastPurchaseDate: string | null;
 }
 
@@ -66,6 +67,7 @@ export function createItem(householdId: number, data: ItemInput) {
         group: data.group,
         category: data.category,
         minQuantity: data.minQuantity,
+        inUse: data.inUse,
         lastPurchaseDate: toDate(data.lastPurchaseDate),
       },
     });
@@ -86,6 +88,7 @@ export async function updateItem(householdId: number, id: number, data: Partial<
         ...(data.group !== undefined ? { group: data.group } : {}),
         ...(data.category !== undefined ? { category: data.category } : {}),
         ...(data.minQuantity !== undefined ? { minQuantity: data.minQuantity } : {}),
+        ...(data.inUse !== undefined ? { inUse: data.inUse } : {}),
         ...(data.lastPurchaseDate !== undefined
           ? { lastPurchaseDate: toDate(data.lastPurchaseDate) }
           : {}),

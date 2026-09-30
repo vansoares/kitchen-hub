@@ -5,6 +5,7 @@ const BG_BY_STATUS: Record<string, string> = {
   ok: "bg-emerald-50 dark:bg-emerald-950/40",
   acabando: "bg-amber-50 dark:bg-amber-950/40",
   acabou: "bg-red-50 dark:bg-red-950/40",
+  em_uso: "bg-sky-50 dark:bg-sky-950/40",
 };
 
 function formatDate(iso: string | null) {
@@ -17,11 +18,12 @@ interface Props {
   item: ItemDTO;
   onConsume: (item: ItemDTO) => void;
   onPurchase: (item: ItemDTO) => void;
+  onToggleInUse: (item: ItemDTO) => void;
   onEdit: (item: ItemDTO) => void;
   compact?: boolean;
 }
 
-export function ItemCard({ item, onConsume, onPurchase, onEdit, compact }: Props) {
+export function ItemCard({ item, onConsume, onPurchase, onToggleInUse, onEdit, compact }: Props) {
   return (
     <div
       className={`flex flex-col shadow-sm transition hover:shadow-md ${BG_BY_STATUS[item.status]} ${
@@ -65,6 +67,18 @@ export function ItemCard({ item, onConsume, onPurchase, onEdit, compact }: Props
           }`}
         >
           +
+        </button>
+        <button
+          onClick={() => onToggleInUse(item)}
+          aria-label={item.inUse ? "Desmarcar em uso" : "Marcar como em uso"}
+          aria-pressed={item.inUse}
+          className={`flex shrink-0 items-center justify-center rounded-full font-bold transition ${
+            item.inUse
+              ? "bg-sky-500 text-white hover:bg-sky-600"
+              : "bg-sky-100 text-sky-600 hover:bg-sky-200 dark:bg-sky-500/20 dark:text-sky-300"
+          } ${compact ? "h-7 px-2.5 text-[11px]" : "h-11 px-4 text-sm"}`}
+        >
+          {item.inUse ? "Em uso ✓" : "Em uso"}
         </button>
         <button
           onClick={() => onEdit(item)}

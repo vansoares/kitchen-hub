@@ -13,7 +13,7 @@ import type { ItemDTO, ItemGroup, ItemStatus } from "@/types/item";
 
 type Notice = { type: "success" | "error"; text: string } | null;
 
-const STATUS_PRIORITY: Record<ItemStatus, number> = { acabou: 0, acabando: 1, ok: 2 };
+const STATUS_PRIORITY: Record<ItemStatus, number> = { acabou: 0, acabando: 1, em_uso: 2, ok: 3 };
 
 const GROUP_TABS: { value: ItemGroup; label: string }[] = [
   { value: "alimento", label: "🍽️ Alimentos" },
@@ -166,6 +166,12 @@ export function PantryApp({ userName }: { userName?: string | null }) {
 
   async function handlePurchase(item: ItemDTO) {
     await api.purchaseItem(item.id, 1);
+    load();
+    loadStats();
+  }
+
+  async function handleToggleInUse(item: ItemDTO) {
+    await api.updateItem(item.id, { inUse: !item.inUse });
     load();
     loadStats();
   }
@@ -325,6 +331,7 @@ export function PantryApp({ userName }: { userName?: string | null }) {
             item={item}
             onConsume={handleConsume}
             onPurchase={handlePurchase}
+            onToggleInUse={handleToggleInUse}
             onEdit={setEditing}
             compact={settings.compactCards}
           />

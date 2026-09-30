@@ -51,6 +51,9 @@ model Item {
   group            String   @default("alimento") // "alimento" | "limpeza_higiene"
   category         String   @default("Outros")
   minQuantity      Float    @default(1)
+  // ha uma unidade aberta/em uso agora (ex: a caixa de creme de leite que ja
+  // foi aberta). Permite controlar itens raros sem manter estoque deles.
+  inUse            Boolean  @default(false)
   lastPurchaseDate DateTime? @db.Date
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

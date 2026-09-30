@@ -22,6 +22,7 @@ interface FormState {
   group: ItemGroup;
   category: string;
   minQuantity: number | string;
+  inUse: boolean;
 }
 
 function emptyForm(defaultGroup: ItemGroup): FormState {
@@ -32,6 +33,7 @@ function emptyForm(defaultGroup: ItemGroup): FormState {
     group: defaultGroup,
     category: "Outros",
     minQuantity: 1,
+    inUse: false,
   };
 }
 
@@ -54,6 +56,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
           group: initial.group ?? defaultGroup,
           category: initial.category ?? "Outros",
           minQuantity: initial.minQuantity ?? 1,
+          inUse: initial.inUse ?? false,
         }
       : {}),
   }));
@@ -161,6 +164,16 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
                 </datalist>
               </Field>
             </div>
+
+            <label className="flex items-center gap-2 text-sm font-semibold text-brand-500 dark:text-brand-300">
+              <input
+                type="checkbox"
+                checked={form.inUse}
+                onChange={(e) => setField("inUse", e.target.checked)}
+                className="h-4 w-4 accent-sky-500"
+              />
+              Tem uma unidade em uso
+            </label>
 
             <div className="mt-2 flex gap-2">
               <button
