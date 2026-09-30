@@ -75,6 +75,15 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
     }));
   }
 
+  // marcar "em uso" num item sem estoque ja conta como 1 unidade.
+  function handleInUseChange(inUse: boolean) {
+    setForm((f) => ({
+      ...f,
+      inUse,
+      quantity: inUse && !(Number(f.quantity) > 0) ? 1 : f.quantity,
+    }));
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     onSave({
@@ -169,7 +178,7 @@ export function ItemForm({ initial, defaultGroup, onSave, onCancel, onDelete }: 
               <input
                 type="checkbox"
                 checked={form.inUse}
-                onChange={(e) => setField("inUse", e.target.checked)}
+                onChange={(e) => handleInUseChange(e.target.checked)}
                 className="h-4 w-4 accent-sky-500"
               />
               Tem uma unidade em uso

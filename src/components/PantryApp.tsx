@@ -171,7 +171,9 @@ export function PantryApp({ userName }: { userName?: string | null }) {
   }
 
   async function handleToggleInUse(item: ItemDTO) {
-    await api.updateItem(item.id, { inUse: !item.inUse });
+    const inUse = !item.inUse;
+    // marcar "em uso" num item zerado ja conta como 1 unidade em estoque.
+    await api.updateItem(item.id, inUse && item.quantity <= 0 ? { inUse, quantity: 1 } : { inUse });
     load();
     loadStats();
   }
