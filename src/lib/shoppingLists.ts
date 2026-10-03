@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
+import * as pantry from "@/lib/pantry";
+import type { ItemGroup } from "@/types/item";
 import type { ShoppingListDTO, ShoppingListSummaryDTO } from "@/types/shoppingList";
 
-type ListWithItems = Prisma.ShoppingListGetPayload<{ include: { items: true } }>;
+type ListWithItems = Prisma.ShoppingListGetPayload<{ include: { items: { include: { item: true } } } }>;
 
 function toSummaryDTO(list: { id: number; name: string; createdBy: string; createdAt: Date; items: { checked: boolean }[] }): ShoppingListSummaryDTO {
   return {
@@ -20,6 +22,7 @@ function toDTO(list: ListWithItems): ShoppingListDTO {
     ...toSummaryDTO(list),
     items: list.items.map((i) => ({
       id: i.id,
+      group: (i.item?.group as ItemGroup | undefined) ?? "alimento",
       name: i.name,
       quantity: i.quantity,
       unit: i.unit,
@@ -41,7 +44,7 @@ export async function getLists(householdId: number): Promise<ShoppingListSummary
 export async function getList(householdId: number, id: number): Promise<ShoppingListDTO | null> {
   const list = await prisma.shoppingList.findFirst({
     where: { id, householdId },
-    include: { items: { orderBy: { createdAt: "asc" } } },
+    include: { items: { orderBy: { createdAt: "asc" }, include: { item: true } } },
   });
   return list ? toDTO(list) : null;
 }
@@ -49,7 +52,7 @@ export async function getList(householdId: number, id: number): Promise<Shopping
 export async function createList(householdId: number, createdBy: string, name: string): Promise<ShoppingListDTO> {
   const list = await prisma.shoppingList.create({
     data: { householdId, createdBy, name },
-    include: { items: true },
+    include: { items: { include: { item: true } } },
   });
   return toDTO(list);
 }
@@ -70,6 +73,8 @@ interface AddItemInput {
   name?: string;
   quantity?: number;
   unit?: string;
+  // grupo usado se o nome livre ainda nao existir na despensa e precisar ser criado
+  group?: ItemGroup;
 }
 
 export async function addItem(householdId: number, listId: number, input: AddItemInput): Promise<ShoppingListDTO> {
@@ -91,8 +96,31 @@ export async function addItem(householdId: number, listId: number, input: AddIte
   } else {
     const name = input.name?.trim();
     if (!name) throw new Error("Nome e obrigatorio");
+    // Item novo digitado na lista: vincula ao da despensa com o mesmo nome ou,
+    // se nao existir, cria na despensa (zerado) pra ja entrar no estoque.
+    let pantryItem = await prisma.item.findFirst({
+      where: { householdId, name: { equals: name, mode: "insensitive" } },
+    });
+    if (!pantryItem) {
+      pantryItem = await pantry.createItem(householdId, {
+        name,
+        quantity: 0,
+        unit: input.unit ?? "un",
+        group: input.group ?? "alimento",
+        category: "Outros",
+        minQuantity: 1,
+        inUse: false,
+        lastPurchaseDate: null,
+      });
+    }
     await prisma.shoppingListItem.create({
-      data: { listId, name, unit: input.unit ?? "un", quantity: input.quantity ?? 1 },
+      data: {
+        listId,
+        itemId: pantryItem.id,
+        name: pantryItem.name,
+        unit: pantryItem.unit,
+        quantity: input.quantity ?? 1,
+      },
     });
   }
 

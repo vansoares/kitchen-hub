@@ -85,7 +85,7 @@ export const api = {
   renameShoppingList: (id: number, name: string) =>
     request<ShoppingListSummaryDTO>(`/shopping-lists/${id}`, { method: "PUT", body: JSON.stringify({ name }) }),
   deleteShoppingList: (id: number) => request<void>(`/shopping-lists/${id}`, { method: "DELETE" }),
-  addShoppingListItem: (listId: number, data: { name?: string; quantity?: number; unit?: string; itemId?: number }) =>
+  addShoppingListItem: (listId: number, data: { name?: string; quantity?: number; unit?: string; itemId?: number; group?: string }) =>
     request<ShoppingListDTO>(`/shopping-lists/${listId}/items`, { method: "POST", body: JSON.stringify(data) }),
   toggleShoppingListItem: (listId: number, itemId: number, checked: boolean) =>
     request<ShoppingListDTO>(`/shopping-lists/${listId}/items/${itemId}`, {

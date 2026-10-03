@@ -36,6 +36,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       name: body?.name,
       unit: body?.unit,
       quantity,
+      group: body?.group === "limpeza_higiene" ? "limpeza_higiene" : "alimento",
     });
     return NextResponse.json(list, { status: 201 });
   } catch (err) {

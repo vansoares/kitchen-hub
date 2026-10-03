@@ -1,5 +1,9 @@
+import type { ItemGroup } from "@/types/item";
+
 export interface ShoppingListItemDTO {
   id: number;
+  // grupo do item da despensa vinculado ("alimento" quando e texto livre)
+  group: ItemGroup;
   name: string;
   quantity: number;
   unit: string;

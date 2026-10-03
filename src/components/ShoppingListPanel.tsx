@@ -349,10 +349,22 @@ export function ShoppingListPanel({ onClose }: { onClose: () => void }) {
               name: i.name,
               detail: `${i.quantity} ${i.unit} em casa · mínimo ${i.minQuantity}`,
               checked: checked.has(i.id),
+              group: i.group,
             }))}
             pricesStorageKey="kitchenhub:market-prices:auto"
             restockLabel="Dar entrada de +1 unidade no estoque dos itens marcados"
             onToggle={(key) => toggle(Number(key))}
+            onAdd={async (name, group) => {
+              // Esta lista e calculada pelo estoque: um item novo entra na despensa
+              // zerado e, por estar "acabado", aparece aqui sozinho.
+              const existing = allItems.find((i) => i.name.trim().toLowerCase() === name.toLowerCase());
+              if (existing) {
+                if (matchesSettings(existing, settings)) throw new Error(`"${existing.name}" já está na lista.`);
+                throw new Error(`"${existing.name}" já está na despensa (${existing.quantity} ${existing.unit}).`);
+              }
+              await api.createItem({ name, quantity: 0, group });
+              await refresh();
+            }}
             onFinish={async ({ total, checkedKeys, restock }) => {
               if (total > 0) await api.createPurchase(total);
               if (restock) {

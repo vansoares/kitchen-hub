@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ItemGroup } from "@/types/item";
 
 export interface MarketRow {
   key: string;
   name: string;
   detail: string;
   checked: boolean;
+  group: ItemGroup;
 }
+
+const TABS: { group: ItemGroup; label: string }[] = [
+  { group: "alimento", label: "🍽️ Alimentos" },
+  { group: "limpeza_higiene", label: "🧴 Higiene e limpeza" },
+];
 
 interface Props {
   title: string;
@@ -18,6 +25,8 @@ interface Props {
   // se informado, mostra a opcao de dar entrada no estoque ao finalizar.
   restockLabel?: string;
   onToggle: (key: string, checked: boolean) => void;
+  // adiciona um item esquecido na hora; o grupo e o da aba aberta.
+  onAdd?: (name: string, group: ItemGroup) => Promise<void>;
   onFinish: (result: { total: number; checkedKeys: string[]; restock: boolean }) => Promise<void>;
   onClose: () => void;
 }
@@ -45,7 +54,10 @@ function savePrices(storageKey: string, prices: Record<string, string>) {
 
 // Tela cheia pensada pro uso em pe, com uma mao, no corredor do mercado:
 // linhas grandes, tela sempre acesa, total parcial do carrinho.
-export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onToggle, onFinish, onClose }: Props) {
+export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onToggle, onAdd, onFinish, onClose }: Props) {
+  const [tab, setTab] = useState<ItemGroup>("alimento");
+  const [newName, setNewName] = useState("");
+  const [adding, setAdding] = useState(false);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [totalOverride, setTotalOverride] = useState<string | null>(null);
   const [restock, setRestock] = useState(true);
@@ -78,9 +90,11 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
     };
   }, []);
 
+  // so a aba aberta aparece na lista; o carrinho/total continuam somando as duas.
+  const tabRows = useMemo(() => rows.filter((r) => r.group === tab), [rows, tab]);
   const ordered = useMemo(
-    () => [...rows.filter((r) => !r.checked), ...rows.filter((r) => r.checked)],
-    [rows]
+    () => [...tabRows.filter((r) => !r.checked), ...tabRows.filter((r) => r.checked)],
+    [tabRows]
   );
   const checkedRows = rows.filter((r) => r.checked);
   const pricedSum = checkedRows.reduce((sum, r) => sum + (Number(prices[r.key]) || 0), 0);
@@ -94,6 +108,22 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
       return next;
     });
     setTotalOverride(null); // editar um preco volta a somar automaticamente
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name || !onAdd) return;
+    setAdding(true);
+    setError(null);
+    try {
+      await onAdd(name, tab);
+      setNewName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao adicionar item");
+    } finally {
+      setAdding(false);
+    }
   }
 
   async function handleFinish() {
@@ -133,10 +163,31 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-brand-500/10 dark:bg-white/10">
           <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} />
         </div>
+        <div className="mt-3 flex gap-2" role="tablist">
+          {TABS.map((t) => {
+            const inTab = rows.filter((r) => r.group === t.group);
+            const left = inTab.filter((r) => !r.checked).length;
+            return (
+              <button
+                key={t.group}
+                role="tab"
+                aria-selected={tab === t.group}
+                onClick={() => setTab(t.group)}
+                className={`flex-1 rounded-full px-3 py-2 text-sm font-bold transition ${
+                  tab === t.group
+                    ? "bg-brand-500 text-white"
+                    : "bg-brand-500/10 text-brand-700 dark:text-brand-200"
+                }`}
+              >
+                {t.label} ({left})
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <ul className="flex-1 overflow-y-auto px-4 py-3">
-        {rows.length === 0 && <p className="py-12 text-center text-brand-400">Nada na lista. 🎉</p>}
+        {tabRows.length === 0 && <p className="py-12 text-center text-brand-400">Nada nesta aba. 🎉</p>}
         {ordered.map((row) => (
           <li key={row.key} className="mb-2">
             <div
@@ -185,6 +236,24 @@ export function MarketMode({ title, rows, pricesStorageKey, restockLabel, onTogg
       </ul>
 
       <div className="flex flex-col gap-2 border-t border-brand-500/10 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-white/10 dark:bg-brand-800">
+        {onAdd && (
+          <form onSubmit={handleAdd} className="flex gap-2">
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={`Lembrou de algo? Adicionar em ${tab === "alimento" ? "alimentos" : "higiene e limpeza"}`}
+              aria-label="Novo item"
+              className="min-w-0 flex-1 rounded-full border-2 border-brand-500/20 bg-white px-4 py-2 text-sm outline-none focus:border-brand-500 dark:bg-brand-900 dark:text-cream"
+            />
+            <button
+              type="submit"
+              disabled={adding || !newName.trim()}
+              className="shrink-0 rounded-full bg-brand-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+            >
+              {adding ? "..." : "+ Item"}
+            </button>
+          </form>
+        )}
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm font-semibold text-brand-400 dark:text-brand-300">Total do carrinho</span>
           <label className="flex items-center gap-1">

@@ -152,10 +152,16 @@ export function ShoppingListDetail({
             name: i.name,
             detail: `${i.quantity} ${i.unit}`,
             checked: i.checked,
+            group: i.group,
           }))}
           pricesStorageKey={`kitchenhub:market-prices:list-${listId}`}
           restockLabel="Dar entrada no estoque dos itens da despensa marcados"
           onToggle={(key, checked) => toggleItem(Number(key), checked)}
+          onAdd={async (name, group) => {
+            // o servidor vincula ao item da despensa de mesmo nome ou cria um novo
+            setList(await api.addShoppingListItem(listId, { name, group }));
+            api.listItems({}).then(setPantryItems).catch(() => {});
+          }}
           onFinish={async ({ total, checkedKeys, restock }) => {
             if (total > 0) await api.createPurchase(total, list.name);
             if (restock) {
